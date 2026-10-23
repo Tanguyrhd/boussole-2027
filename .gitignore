@@ -7,3 +7,6 @@
 /page/index.html
 /page/data/
 __pycache__/
+
+# Prototype « Dit / a voté » : hypothèses non vérifiées, gardées hors du dépôt public
+/detect/
