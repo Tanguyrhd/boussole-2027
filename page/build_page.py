@@ -30,7 +30,8 @@ img{max-width:100%}
 """
 FOOTER = """<footer class="wrap src" style="padding-block:0 40px">
 Page personnelle, non affiliée à un parti ni à un média. Données : MonVote2027 et Poligraph,
-dont les contenus restent la propriété de leurs auteurs. Signaler une erreur : écris-moi.
+dont les contenus restent la propriété de leurs auteurs.
+<a href="https://github.com/Tanguyrhd/boussole-2027/issues">Signaler une erreur</a> · <a href="https://github.com/Tanguyrhd/boussole-2027">Code source</a>
 </footer>
 """
 
