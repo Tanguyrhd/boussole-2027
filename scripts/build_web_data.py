@@ -4,9 +4,11 @@ Entrées : data/monvote_questions.json, data/monvote_sources.json, data/poligrap
           raw/poligraph/api/*.csv
 Sorties : data/web/questions.json, mesures.json, affaires.json, factchecks.json, meta.json
 """
-import csv, json, time
+import csv, json, sys, time
 from collections import Counter
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fc_sujets import sujets  # classement automatique par mots-clés
 ROOT = Path(__file__).resolve().parent.parent
 WEB = ROOT / "data/web"; WEB.mkdir(parents=True, exist_ok=True)
 
@@ -84,7 +86,7 @@ fc = []
 for r in csv.DictReader(open(ROOT / "raw/poligraph/api/factchecks.csv", encoding="utf-8-sig")):
     if r["Slug politique"] in PG2ID and r["Auteur direct"] == "oui":
         fc.append({"cand": PG2ID[r["Slug politique"]], "titre": r["Titre"], "verdict": r["Verdict (code)"],
-                   "fc": r["Fact-checker"], "url": r["URL source"],
+                   "fc": r["Fact-checker"], "url": r["URL source"], "sujets": sujets(r["Titre"]),
                    "date": r["Date de la déclaration"] or r["Date de publication"]})
 (WEB / "factchecks.json").write_text(json.dumps(fc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 print("fact-checks:", dict(Counter(f["cand"] for f in fc)))

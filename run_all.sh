@@ -8,4 +8,5 @@ python3 fetch_sources.py
 python3 scripts/parse_monvote.py
 python3 scripts/parse_monvote_sources.py
 python3 scripts/build_web_data.py
+python3 scripts/build_europarl.py
 python3 page/build_page.py

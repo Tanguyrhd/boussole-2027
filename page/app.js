@@ -154,17 +154,80 @@ function renderVotes(){
   list=[...byQ.values()].map(rs=>{const q=rs[0].q,voted=new Set(rs.map(r=>r.c));
    const cols=[-2,-1,0,1,2].map(v=>`<div class="col c${v}"><div class="lab">${LAB[v+2]}</div>${C.filter(c=>q.pos[c[0]]===v).map(c=>`<span class="cand${voted.has(c[0])?" voted":" faded"}">${c[1]}</span>`).join("")}</div>`).join("");
    return `<div class="q"><h4><span class="mono">Q${q.n}</span> ${esc(q.text)}</h4><div class="scale">${cols}</div><details><summary class="src">${rs.length>1?`Voir les ${rs.length} votes`:"Voir le vote"}</summary>${rs.map(r=>`<div class="vrow"><div><span class="mono">${NAME[r.c]}</span></div>${vsrc(r)}</div>`).join("")}</details></div>`}).join("")}
- document.getElementById("v-votes").innerHTML=`<div class="block"><h2>Promesses vs votes</h2><p class="lede">${uniq(all).length} positions sont justifiées par un vote réel à l'Assemblée ou au Sénat (le candidat lui-même ou son groupe). Ce sont les positions les plus solides : elles reposent sur un acte, pas sur une promesse.</p></div>
+ document.getElementById("votes-an").innerHTML=`<div class="block"><h2>Promesses vs votes</h2><p class="lede">${uniq(all).length} positions sont justifiées par un vote réel à l'Assemblée ou au Sénat (le candidat lui-même ou son groupe). Ce sont les positions les plus solides : elles reposent sur un acte, pas sur une promesse.</p></div>
  <div class="block"><h3>Ce que chacun a voté</h3><p class="src">Pour chaque candidat, ses positions appuyées sur un vote : pour ou contre l'énoncé de la question. Clique sur une ligne pour filtrer la liste.</p>
  <div class="bars">${summary}</div><div class="legend"><span><span class="sw vk-pour"></span>Pour l'énoncé</span><span><span class="sw vk-neutre"></span>Neutre</span><span><span class="sw vk-contre"></span>Contre l'énoncé</span></div></div>
  <div class="filters">${sel("vf-cand","Candidat",[["all","Tous"],...C.map(c=>[c[0],c[1]])],VF.cand)}${sel("vf-pos","Position",posOpts,VF.pos)}${sel("vf-theme","Thème",[["all","Tous"],...THEMES.filter(t=>themes.includes(t.id)).map(t=>[t.id,t.name])],VF.theme)}${seg("vview",[["liste","Liste"],["question","Par question"]],VF.view)}</div>
  ${!answered?'<p class="src">Réponds à des questions dans l\'onglet Thèmes pour pouvoir filtrer sur tes accords et désaccords.</p>':""}
  <p class="mono">${f.length} vote${f.length>1?"s":""} affiché${f.length>1?"s":""}</p>
  <div>${list||'<p class="note">Aucun vote ne correspond à ces filtres.</p>'}</div>
- <p class="note">Peu de votes pour Glucksmann, Philippe, Tondelier ou Zemmour : ils ne siègent pas à l'Assemblée (Glucksmann est député européen, et ses votes à Strasbourg ne sont pas couverts ici). L'absence de vote ne veut pas dire incohérence.</p>
+ <p class="note">Peu de votes à l'Assemblée pour Glucksmann, Philippe, Tondelier ou Zemmour : ils n'y siègent pas. L'absence de vote ne veut pas dire incohérence. Pour Glucksmann et les partis présents au Parlement européen, voir plus bas.</p>
  <div class="card"><h3>Deux votes de groupe marquants</h3>
  <p><b>Loi immigration, 19 décembre 2023</b> : adoptée par 349 voix contre 186. RN et LR pour, gauche contre, majorité présidentielle divisée. Sans les 88 voix RN, le texte n'avait pas la majorité absolue. <a class="src" href="https://datan.fr/votes/legislature-16/vote_3213" target="_blank" rel="noopener">Datan</a></p>
  <p><b>${T("censure","Motion de censure")} sur les retraites, 20 mars 2023</b> : rejetée à 9 voix près (278 sur 287 nécessaires). Gauche, LIOT, RN et 19 LR sur 61 pour ; Renaissance, MoDem et Horizons ne l'ont pas votée. <a class="src" href="https://datan.fr/votes/legislature-16/vote_1240" target="_blank" rel="noopener">Datan</a></p></div>`;
+}
+
+/* ---------- Parlement européen (HowTheyVote.eu, licence ODbL) ---------- */
+let EP=[];
+const EPE=[["p:glucksmann","Glucksmann (son vote)"],["p:bardella","Bardella (son vote)"],["d:le_pen","RN (Le Pen)"],["d:melenchon","LFI (Mélenchon)"],["d:glucksmann","Place publique (Glucksmann)"],["d:tondelier","Écologistes (Tondelier)"],["d:attal","Renaissance (Attal)"],["d:philippe","Horizons (Philippe)"],["d:retailleau","LR (Retailleau)"],["d:zemmour","Reconquête (Zemmour)"]];
+const EPN=Object.fromEntries(EPE), EPSHORT={"d:le_pen":"RN","d:melenchon":"LFI","d:glucksmann":"PP","d:tondelier":"Écolo","d:attal":"Renais.","d:philippe":"Horizons","d:retailleau":"LR","d:zemmour":"Reconq."};
+const EPLAB={"1":"Pour","-1":"Contre","0":"Abst."};
+function epPos(v,e){const k=e.slice(2);if(e[0]==="p"){const x=v.perso[k];return x===undefined?null:x}const d=v.deleg[k];return d?d[0]:null}
+function epAgree(a,b,vs){let n=0,s=0;for(const v of vs){const x=epPos(v,a),y=epPos(v,b);if(x==null||y==null)continue;n++;if(x===y)s++}return [n?s/n:null,n]}
+const THEP=x=>THNAME[x]||"Autre";
+let EF={a:"p:glucksmann",b:"p:bardella",mode:"all",theme:"all",q:"",n:25};
+function epBadge(p){return p==null?'<span class="posb p0">absent</span>':`<span class="posb ${p>0?"p2":p<0?"m2":"p0"}">${EPLAB[p]}</span>`}
+function renderEP(){
+ const box=document.getElementById("votes-ep");if(!EP.length){box.innerHTML="";return}
+ const D=EPE.filter(e=>e[0][0]==="d").map(e=>e[0]);
+ const vsT=EP.filter(v=>EF.theme==="all"||v.themes.includes(EF.theme));
+ /* matrice d'accord entre délégations */
+ const cell=(a,b)=>{if(a===b)return '<td class="mx-self">—</td>';const [r,n]=epAgree(a,b,vsT);return r==null?'<td>·</td>':`<td style="background:color-mix(in srgb,var(--pos) ${Math.round(Math.max(0,Math.min(1,(r-0.3)/0.7))*100)}%,var(--surface))${r>0.75?";color:var(--bg)":""}" title="${EPN[a]} / ${EPN[b]} : ${Math.round(r*100)} % sur ${n} votes">${Math.round(r*100)}</td>`};
+ const matrix=`<div class="tbl"><table class="mx"><thead><tr><th></th>${D.map(d=>`<th>${EPSHORT[d]}</th>`).join("")}</tr></thead><tbody>${D.map(a=>`<tr><th>${EPSHORT[a]}</th>${D.map(b=>cell(a,b)).join("")}</tr>`).join("")}</tbody></table></div>`;
+ /* liste filtrée */
+ const q=EF.q.trim().toLowerCase();
+ const list=vsT.filter(v=>{const x=epPos(v,EF.a),y=epPos(v,EF.b);if(EF.mode==="desaccord"&&!(x!=null&&y!=null&&x!==y))return false;if(EF.mode==="accord"&&!(x!=null&&y!=null&&x===y))return false;return !q||v.titre.toLowerCase().includes(q)});
+ const [ra,na]=epAgree(EF.a,EF.b,vsT);
+ const themes=[...new Set(EP.flatMap(v=>v.themes))];
+ const rows=list.slice(0,EF.n).map(v=>`<div class="vrow"><div class="row"><span class="mono">${esc(v.date)}</span> ${v.themes.map(t=>`<span class="fam">${THEP(t)}</span>`).join(" ")}</div><div><b>${esc(v.titre)}</b></div>
+  <div class="eppos"><span>${EPN[EF.a]} ${epBadge(epPos(v,EF.a))}</span><span>${EPN[EF.b]} ${epBadge(epPos(v,EF.b))}</span></div>
+  <details><summary class="src">Toutes les délégations · résultat ${v.pour} pour, ${v.contre} contre, ${v.abst} abst.</summary><div class="eppos small">${D.map(d=>`<span>${EPSHORT[d]} ${epBadge(epPos(v,d))}${v.deleg[d.slice(2)]&&v.deleg[d.slice(2)][1]<0.75?` <span class="fam">divisés (${Math.round(v.deleg[d.slice(2)][1]*100)} %)</span>`:""}</span>`).join("")}</div></details>
+  <div class="src"><a href="https://howtheyvote.eu/votes/${v.id}" target="_blank" rel="noopener">Détail du vote sur HowTheyVote.eu</a></div></div>`).join("");
+ box.innerHTML=`<div class="block"><h2>Au Parlement européen</h2><p class="lede">${EP.length} votes finaux depuis juillet 2019 : les vrais votes personnels de Glucksmann et Bardella, eurodéputés, et la position majoritaire des eurodéputés français de chaque parti.</p></div>
+ <p class="note">Roussel (PCF) et Ruffin n'ont pas d'eurodéputés : ils n'apparaissent pas ici. Un vote de délégation dit ce qu'a voté le parti à Strasbourg, pas forcément le candidat lui-même. Les intitulés sont en anglais dans la source.</p>
+ <div class="block"><h3>Qui vote avec qui</h3><p class="src">Part des votes où deux délégations ont eu la même position majoritaire (pour, contre ou abstention)${EF.theme==="all"?"":`, thème « ${THEP(EF.theme)} »`}. Plus la case est foncée, plus elles votent pareil (couleur graduée de 30 % à 100 %).</p>${matrix}</div>
+ <div class="block"><h3>Comparer deux votants</h3>
+ <div class="filters">${sel("ep-a","Votant A",EPE,EF.a)}${sel("ep-b","Votant B",EPE,EF.b)}${sel("ep-mode","Afficher",[["all","Tous les votes"],["desaccord","Leurs désaccords"],["accord","Leurs accords"]],EF.mode)}${sel("ep-theme","Thème",[["all","Tous"],...THEMES.filter(t=>themes.includes(t.id)).map(t=>[t.id,t.name]),["autre","Autre"]],EF.theme)}<div class="fctl"><label for="ep-q" class="mono">Rechercher (titre en anglais)</label><input id="ep-q" type="search" value="${esc(EF.q)}" placeholder="ex. migration, Ukraine, climate"></div></div>
+ ${ra!=null?`<p class="agree"><b>${Math.round(ra*100)} %</b> d'accord entre ${EPN[EF.a]} et ${EPN[EF.b]}, sur ${na} votes où les deux ont voté.</p>`:""}
+ <p class="mono">${list.length} vote${list.length>1?"s":""}${list.length>EF.n?`, ${EF.n} affichés`:""}</p>
+ <div>${rows||'<p class="note">Aucun vote ne correspond.</p>'}</div>
+ ${list.length>EF.n?'<button class="btn ghost" id="ep-more">Afficher 25 de plus</button>':""}</div>
+ <p class="src">Source : <a href="https://howtheyvote.eu" target="_blank" rel="noopener">HowTheyVote.eu</a> (Open Database License). Base dérivée publiée sous la même licence.</p>`;
+}
+
+/* ---------- Face à face ---------- */
+let DU={a:"le_pen",b:"melenchon"};
+const EPOF={le_pen:"d:le_pen",melenchon:"d:melenchon",glucksmann:"p:glucksmann",tondelier:"d:tondelier",attal:"d:attal",philippe:"d:philippe",retailleau:"d:retailleau",zemmour:"d:zemmour"};
+function renderDuel(){
+ const {a,b}=DU, both=Q.filter(q=>q.pos[a]!=null&&q.pos[b]!=null);
+ const gap=q=>Math.abs(q.pos[a]-q.pos[b]);
+ const score=l=>l.length?l.reduce((s,q)=>s+(4-gap(q)),0)/(l.length*4):null;
+ const glob=score(both);
+ const byTh=THEMES.map(t=>{const l=both.filter(q=>q.theme===t.id);return [t,score(l),l.length]}).filter(x=>x[2]);
+ const opp=both.filter(q=>gap(q)>=3).sort((x,y)=>gap(y)-gap(x)||x.n-y.n), same=both.filter(q=>gap(q)===0&&q.pos[a]!==0);
+ const qline=q=>`<div class="vrow"><div><b>Q${q.n}</b> ${esc(q.text)} <span class="fam">${THNAME[q.theme]}</span></div><div class="eppos"><span>${NAME[a]} <span class="posb ${POSCLS[q.pos[a]]}">${LAB[q.pos[a]+2]}</span></span><span>${NAME[b]} <span class="posb ${POSCLS[q.pos[b]]}">${LAB[q.pos[b]+2]}</span></span></div></div>`;
+ let ep="";const ea=EPOF[a],eb=EPOF[b];
+ if(EP.length&&ea&&eb){const [r,n]=epAgree(ea,eb,EP);ep=`<div class="card"><h3>Au Parlement européen</h3><p><b>${Math.round(r*100)} %</b> de votes identiques entre ${EPN[ea]} et ${EPN[eb]}, sur ${n} votes finaux depuis 2019.</p><p class="src">Ce sont des votes réels, pas des déclarations. <button class="btn ghost" id="du-ep">Voir leurs désaccords au Parlement européen</button></p></div>`}
+ else if(EP.length)ep=`<p class="src">${[a,b].filter(x=>!EPOF[x]).map(x=>NAME[x]).join(" et ")} : pas d'eurodéputés, donc pas de comparaison au Parlement européen.</p>`;
+ const opts=C.map(c=>[c[0],c[1]]);
+ document.getElementById("v-duel").innerHTML=`<div class="block"><h2>Face à face</h2><p class="lede">Deux candidats, leurs positions comparées question par question : où ils s'opposent, où ils se rejoignent.</p>
+ <div class="filters">${sel("du-a","Candidat A",opts,a)}${sel("du-b","Candidat B",opts,b)}<button class="btn ghost" id="du-swap">Inverser</button></div></div>
+ ${a===b?'<p class="note">Choisis deux candidats différents.</p>':`
+ <div class="card"><p class="agree"><b>${glob==null?"—":Math.round(glob*100)+" %"}</b> de proximité sur ${both.length} questions où les deux ont une position.</p><p class="src">Même calcul que le score d'affinité : 100 % = mêmes positions partout, 0 % = toujours aux deux extrêmes.</p></div>
+ <div class="block"><h3>Par thème</h3><div class="bars">${byTh.map(([t,s,n])=>`<div class="bar"><span class="mono">${t.name}</span><div class="track"><div class="fill" style="width:${Math.round(s*100)}%"></div></div><span class="v">${Math.round(s*100)} %</span></div>`).join("")}</div><p class="src">Le nombre de questions varie beaucoup selon le thème (2 pour l'agriculture, 13 pour l'énergie) : un thème à 2 questions se lit avec prudence.</p></div>
+ <div class="block"><h3>Où ils s'opposent (${opp.length})</h3><p class="src">Au moins trois crans d'écart, par exemple ++ contre −.</p>${opp.map(qline).join("")||'<p class="src">Aucune opposition franche.</p>'}</div>
+ <div class="block"><h3>Où ils sont d'accord (${same.length})</h3><p class="src">Exactement la même position, hors « neutre ».</p>${same.map(qline).join("")||'<p class="src">Aucune question avec exactement la même position.</p>'}</div>
+ ${ep}`}`;
 }
 
 const STCLS={"définitive":"def","non définitive":"nondef","relaxe":"relaxe","en cours":"cours"};
@@ -191,18 +254,24 @@ const VLAB={TRUE:"Vrai",MOSTLY_TRUE:"Plutôt vrai",HALF_TRUE:"À moitié vrai",M
 const FAM={TRUE:"vrai",MOSTLY_TRUE:"vrai",HALF_TRUE:"nuance",MISLEADING:"nuance",OUT_OF_CONTEXT:"nuance",MOSTLY_FALSE:"faux",FALSE:"faux",UNVERIFIABLE:"inv"};
 const FORD=["vrai","nuance","faux","inv"], FLAB={vrai:"Vrai ou plutôt vrai",nuance:"Nuancé ou trompeur",faux:"Faux ou plutôt faux",inv:"Invérifiable"};
 const FEW=5;
-let FF={cand:"all",verdict:"all",fc:"all",year:"all",mode:"fam",sort:"recent"};
+let FF={cand:"all",verdict:"all",fc:"all",year:"all",sujet:"all",mode:"fam",sort:"recent"};
+const sujOK=f=>FF.sujet==="all"||(f.sujets||[]).includes(FF.sujet);
 const fcYear=f=>(f.date||"").slice(0,4)||"?";
 function fcVerdictOK(f){const v=FF.verdict;return v==="all"||(v.startsWith("fam:")?FAM[f.verdict]===v.slice(4):f.verdict===v)}
 function renderFC(){
  const ids=[...C.map(c=>c[0]),"bardella"];
- const ctx=FC.filter(f=>(FF.fc==="all"||f.fc===FF.fc)&&(FF.year==="all"||fcYear(f)===FF.year)); /* périmètre des barres */
+ const ctx=FC.filter(f=>(FF.fc==="all"||f.fc===FF.fc)&&(FF.year==="all"||fcYear(f)===FF.year)&&sujOK(f)); /* périmètre des barres */
  const keys=FF.mode==="fam"?FORD:VORD, kOf=f=>FF.mode==="fam"?FAM[f.verdict]:f.verdict, cls=k=>FF.mode==="fam"?"vf-"+k:"v-"+k, lab=k=>FF.mode==="fam"?FLAB[k]:VLAB[k];
  const rows=ids.map(id=>{const l=ctx.filter(f=>f.cand===id),n=l.length;
   return `<button class="fcrow rowbtn${n<FEW?" few":""}" data-fccand="${id}" aria-pressed="${FF.cand===id}"><span class="mono">${NAME[id]}</span><div class="stack" role="img" aria-label="${NAME[id]} : ${n} vérifications">${n?keys.map(k=>{const c=l.filter(f=>kOf(f)===k).length;return c?`<span class="${cls(k)}" style="width:${c/n*100}%" title="${lab(k)} : ${c}"></span>`:""}).join(""):""}</div><span class="v mono">${n}</span></button>`}).join("");
  const list=ctx.filter(f=>(FF.cand==="all"||f.cand===FF.cand)&&fcVerdictOK(f)).sort((a,b)=>FF.sort==="recent"?(b.date||"").localeCompare(a.date||""):(a.date||"").localeCompare(b.date||""));
  /* frise par année : vérifications de la sélection (candidat + verdict + fact-checker), par famille */
- const yl=FC.filter(f=>(FF.cand==="all"||f.cand===FF.cand)&&fcVerdictOK(f)&&(FF.fc==="all"||f.fc===FF.fc));
+ const yl=FC.filter(f=>(FF.cand==="all"||f.cand===FF.cand)&&fcVerdictOK(f)&&(FF.fc==="all"||f.fc===FF.fc)&&sujOK(f));
+ /* par sujet : vérifications de la sélection (candidat, verdict, fact-checker, année), un fact-check peut compter dans plusieurs sujets */
+ const sl=FC.filter(f=>(FF.cand==="all"||f.cand===FF.cand)&&fcVerdictOK(f)&&(FF.fc==="all"||f.fc===FF.fc)&&(FF.year==="all"||fcYear(f)===FF.year));
+ const SUJ=[...THEMES.map(t=>[t.id,t.name]),["autre","Autre"]].map(([id,nm])=>[id,nm,sl.filter(f=>(f.sujets||[]).includes(id))]).filter(x=>x[2].length).sort((x,y)=>y[2].length-x[2].length);
+ const smax=Math.max(1,...SUJ.map(x=>x[2].length));
+ const sujChart=`<div class="bars">${SUJ.map(([id,nm,l])=>`<button class="fcrow rowbtn sujrow" data-fcsujet="${id}" aria-pressed="${FF.sujet===id}"><span class="mono">${nm}</span><div class="stack" style="width:${l.length/smax*100}%">${FORD.map(k=>{const c=l.filter(f=>FAM[f.verdict]===k).length;return c?`<span class="vf-${k}" style="width:${c/l.length*100}%" title="${FLAB[k]} : ${c}"></span>`:""}).join("")}</div><span class="v mono">${l.length}</span></button>`).join("")}</div>`;
  const years=[...new Set(FC.map(fcYear))].filter(y=>y!=="?").sort(), ymax=Math.max(1,...years.map(y=>yl.filter(f=>fcYear(f)===y).length));
  const yearChart=`<div class="ychart" role="img" aria-label="Vérifications par année">${years.map(y=>{const l=yl.filter(f=>fcYear(f)===y);return `<button class="ycol" data-fcyear="${y}" aria-pressed="${FF.year===y}" title="${y} : ${l.length}"><span class="yn">${l.length||""}</span><span class="ybar" style="height:${l.length/ymax*85}%">${FORD.map(k=>{const c=l.filter(f=>FAM[f.verdict]===k).length;return c?`<span class="vf-${k}" style="flex:${c}"></span>`:""}).join("")}</span><span class="ylab">${y}</span></button>`}).join("")}</div>`;
  const fcs=[...new Set(FC.map(f=>f.fc))].sort((a,b)=>FC.filter(f=>f.fc===b).length-FC.filter(f=>f.fc===a).length);
@@ -213,11 +282,12 @@ function renderFC(){
  <div class="bars">${rows}</div>
  <div class="legend">${keys.filter(k=>k!=="OUT_OF_CONTEXT").map(k=>`<button class="legbtn" data-fcverdict="${FF.mode==="fam"?"fam:"+k:k}" aria-pressed="${FF.verdict===(FF.mode==="fam"?"fam:"+k:k)}"><span class="sw ${cls(k)}"></span>${lab(k)}</button>`).join("")}</div>
  <p class="src">Clique sur une ligne pour filtrer par candidat, sur une couleur pour filtrer par verdict.</p>
+ <div class="block"><h3>Par sujet</h3><p class="src">Sujets déduits automatiquement des titres (mots-clés), donc imparfaits ; un fact-check peut avoir plusieurs sujets. Clique sur un sujet pour filtrer.</p>${sujChart}</div>
  <div class="block"><h3>Au fil du temps</h3><p class="src">Nombre de vérifications par année pour la sélection en cours. Clique sur une année pour filtrer.</p>${yearChart}</div>
  <div class="block"><h3>Les vérifications</h3>
- <div class="filters">${sel("ff-cand","Candidat",[["all","Tous"],...ids.map(id=>[id,NAME[id]])],FF.cand)}${sel("ff-verdict","Verdict",verdictOpts,FF.verdict)}${sel("ff-fc","Fact-checker",[["all","Tous"],...fcs.map(x=>[x,x])],FF.fc)}${sel("ff-year","Année",[["all","Toutes"],...years.slice().reverse().map(y=>[y,y])],FF.year)}${sel("ff-sort","Ordre",[["recent","Plus récentes d'abord"],["old","Plus anciennes d'abord"]],FF.sort)}${FF.cand!=="all"||FF.verdict!=="all"||FF.fc!=="all"||FF.year!=="all"?'<button class="btn ghost" id="ff-reset">Effacer les filtres</button>':""}</div>
+ <div class="filters">${sel("ff-cand","Candidat",[["all","Tous"],...ids.map(id=>[id,NAME[id]])],FF.cand)}${sel("ff-verdict","Verdict",verdictOpts,FF.verdict)}${sel("ff-sujet","Sujet",[["all","Tous"],...THEMES.map(t=>[t.id,t.name]),["autre","Autre"]],FF.sujet)}${sel("ff-fc","Fact-checker",[["all","Tous"],...fcs.map(x=>[x,x])],FF.fc)}${sel("ff-year","Année",[["all","Toutes"],...years.slice().reverse().map(y=>[y,y])],FF.year)}${sel("ff-sort","Ordre",[["recent","Plus récentes d'abord"],["old","Plus anciennes d'abord"]],FF.sort)}${FF.cand!=="all"||FF.verdict!=="all"||FF.fc!=="all"||FF.year!=="all"||FF.sujet!=="all"?'<button class="btn ghost" id="ff-reset">Effacer les filtres</button>':""}</div>
  <p class="mono">${list.length} vérification${list.length>1?"s":""}</p>
- <div class="fclist">${list.map(f=>`<div class="vrow"><div><span class="sw v-${f.verdict}"></span><b>${VLAB[f.verdict]||esc(f.verdict)}</b> · <span class="mono">${NAME[f.cand]}</span> · ${esc(f.date)}</div><div><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.titre)}</a> <span class="src">(${esc(f.fc)})</span></div></div>`).join("")||'<p class="note">Aucune vérification ne correspond à ces filtres.</p>'}</div></div>`;
+ <div class="fclist">${list.map(f=>`<div class="vrow"><div><span class="sw v-${f.verdict}"></span><b>${VLAB[f.verdict]||esc(f.verdict)}</b> · <span class="mono">${NAME[f.cand]}</span> · ${esc(f.date)}</div><div><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.titre)}</a> <span class="src">(${esc(f.fc)})</span></div><div>${(f.sujets||[]).map(t=>`<span class="fam">${THNAME[t]||"Autre"}</span>`).join(" ")}</div></div>`).join("")||'<p class="note">Aucune vérification ne correspond à ces filtres.</p>'}</div></div>`;
 }
 
 const CONTRO=[
@@ -253,12 +323,15 @@ function renderMethode(){
  <p><b>Candidats retenus</b> : les 10 premiers du sondage Ifop du 17-19 octobre 2026 (Le Pen 35 %, Mélenchon 15 %, Glucksmann 12 %, Philippe 12 %, Attal 6 %, Retailleau 6 %, Zemmour 3,5 %, Tondelier 3 %, Roussel 2 %, Ruffin 2 %). Bardella apparaît dans Justice et Fact-checks comme Premier ministre pressenti.</p>
  <p><b>Positions</b> : <a href="https://monvote2027.fr/donnees" target="_blank" rel="noopener">MonVote2027</a>, 100 questions sur 5 niveaux, chacune avec ses sources (programmes, déclarations, articles, votes).</p>
  <p><b>Affaires judiciaires et fact-checks</b> : exports de l'API publique de <a href="https://poligraph.fr" target="_blank" rel="noopener">Poligraph</a>.</p>
+ <p><b>Votes au Parlement européen</b> : <a href="https://howtheyvote.eu" target="_blank" rel="noopener">HowTheyVote.eu</a>, sous <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">Open Database License (ODbL)</a>. Seuls les votes finaux sur un texte sont retenus (pas les amendements). La position d'une délégation est celle de la majorité de ses eurodéputés présents ; elle est signalée « divisés » quand moins de 75 % ont voté pareil. Les données dérivées publiées ici restent sous ODbL.</p>
  <p><b>Mesures phares, controverses, glossaire</b> : rédigés à la main à partir de <a href="https://votons-2027.fr/themes/economie" target="_blank" rel="noopener">Votons</a>, de Poligraph et de la presse. Chaque mesure et chaque controverse renvoie à sa source.</p></div>
  <div class="card"><h3>Ce qui est automatique, ce qui ne l'est pas</h3>
  <div class="tbl"><table><thead><tr><th>Contenu</th><th>Mise à jour</th></tr></thead><tbody>
  <tr><td>Positions des candidats et leurs sources</td><td>Automatique (script)</td></tr>
  <tr><td>Affaires judiciaires</td><td>Automatique (script)</td></tr>
  <tr><td>Fact-checks</td><td>Automatique (script)</td></tr>
+ <tr><td>Sujets des fact-checks</td><td>Automatique, par mots-clés dans le titre (imparfait)</td></tr>
+ <tr><td>Votes au Parlement européen et thèmes de ces votes</td><td>Automatique, thèmes déduits de la classification officielle du Parlement</td></tr>
  <tr><td>Rangement des questions par thème</td><td>Automatique, par une règle fixe sur les étiquettes de MonVote2027</td></tr>
  <tr><td>Liste des 10 candidats</td><td>À la main</td></tr>
  <tr><td>Mesures phares, controverses, glossaire</td><td>À la main</td></tr>
@@ -272,7 +345,7 @@ function renderMethode(){
  <ul class="lim">
  <li><b>Les questions ne sont pas neutres par nature.</b> Leur choix et leur formulation viennent de MonVote2027 ; ton score dépend d'eux.</li>
  <li><b>Les citations sont des résumés</b> rédigés par MonVote2027 : vérifie la source avant de citer un candidat.</li>
- <li><b>Les votes au Parlement européen ne sont pas couverts</b>, ce qui pénalise la lecture de Glucksmann et Bardella.</li>
+ <li><b>Les votes européens ne couvrent pas tout le monde</b> : Roussel et Ruffin n'ont pas d'eurodéputés, et seuls Glucksmann et Bardella y votent en personne. Les autres sont représentés par leur parti.</li>
  <li><b>Les mesures phares sont partielles</b> : les pages de mesures de Poligraph sont protégées contre les accès automatisés.</li>
  <li><b>Les bases citoyennes peuvent être incomplètes</b> : l'absence d'une affaire ou d'un fact-check ne prouve rien.</li>
  <li><b>Certaines mesures datent de 2022 ou 2024</b> (étiquette jaune) et n'ont pas forcément été reprises pour 2027.</li></ul></div>
@@ -281,7 +354,7 @@ function renderMethode(){
  <p class="src">Code source : <a href="${REPO}" target="_blank" rel="noopener">${REPO.replace("https://","")}</a></p></div>`;
 }
 
-function show(v){document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));document.querySelectorAll("section.view").forEach(s=>s.hidden=s.id!=="v-"+v);if(v==="affinite")renderAff();if(v==="votes")renderVotes()}
+function show(v){document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));document.querySelectorAll("section.view").forEach(s=>s.hidden=s.id!=="v-"+v);if(v==="affinite")renderAff();if(v==="votes")renderVotes();if(v==="duel")renderDuel()}
 document.querySelector("nav.tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-v]");if(b)show(b.dataset.v)});
 
 const pop=document.getElementById("pop");
@@ -300,18 +373,25 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")pop.hidden=true});
 document.addEventListener("input",e=>{if(e.target.dataset.w){const v=+e.target.value;S.w[e.target.dataset.w]=v;save();document.getElementById("wl").textContent=["Aucune","Faible","Moyenne","Forte"][v]}});
 document.addEventListener("change",e=>{const id=e.target.id,v=e.target.value;
  if(id.startsWith("vf-")){VF[id.slice(3)]=v;renderVotes()}
- if(id.startsWith("ff-")){FF[id.slice(3)]=v;renderFC()}});
+ if(id.startsWith("ff-")){FF[id.slice(3)]=v;renderFC()}
+ if(id.startsWith("ep-")&&id!=="ep-q"){EF[id.slice(3)]=v;EF.n=25;renderEP()}
+ if(id.startsWith("du-")){DU[id.slice(3)]=v;renderDuel()}});
+let epT;document.addEventListener("input",e=>{if(e.target.id==="ep-q"){clearTimeout(epT);const v=e.target.value;epT=setTimeout(()=>{EF.q=v;EF.n=25;renderEP();const i=document.getElementById("ep-q");if(i){i.focus();i.setSelectionRange(v.length,v.length)}},250)}});
 document.addEventListener("click",e=>{
  const s=e.target.closest("[data-seg]");if(s){if(s.dataset.seg==="vview"){VF.view=s.dataset.val;renderVotes()}else{FF.mode=s.dataset.val;FF.verdict="all";renderFC()}return}
  const vc=e.target.closest("[data-vcand]");if(vc){VF.cand=VF.cand===vc.dataset.vcand?"all":vc.dataset.vcand;renderVotes();return}
  const fc=e.target.closest("[data-fccand]");if(fc){FF.cand=FF.cand===fc.dataset.fccand?"all":fc.dataset.fccand;renderFC();return}
  const fv=e.target.closest("[data-fcverdict]");if(fv){FF.verdict=FF.verdict===fv.dataset.fcverdict?"all":fv.dataset.fcverdict;renderFC();return}
  const fy=e.target.closest("[data-fcyear]");if(fy){FF.year=FF.year===fy.dataset.fcyear?"all":fy.dataset.fcyear;renderFC();return}
- if(e.target.id==="ff-reset"){FF={...FF,cand:"all",verdict:"all",fc:"all",year:"all"};renderFC()}});
+ if(e.target.id==="ff-reset"){FF={...FF,cand:"all",verdict:"all",fc:"all",year:"all",sujet:"all"};renderFC();return}
+ const fs=e.target.closest("[data-fcsujet]");if(fs){FF.sujet=FF.sujet===fs.dataset.fcsujet?"all":fs.dataset.fcsujet;renderFC();return}
+ if(e.target.id==="ep-more"){EF.n+=25;renderEP();return}
+ if(e.target.id==="du-swap"){DU={a:DU.b,b:DU.a};renderDuel();return}
+ if(e.target.id==="du-ep"){EF={...EF,a:EPOF[DU.a],b:EPOF[DU.b],mode:"desaccord",n:25};renderEP();show("votes");document.getElementById("votes-ep").scrollIntoView();return}});
 
-Promise.all(["questions","affaires","factchecks","meta"].map(n=>fetch(`data/${n}.json`).then(r=>{if(!r.ok)throw new Error(n);return r.json()})))
-.then(([q,a,f,m])=>{Q=q;AFF=a;FC=f;META=m;
+Promise.all(["questions","affaires","factchecks","meta","europarl"].map(n=>fetch(`data/${n}.json`).then(r=>{if(!r.ok)throw new Error(n);return r.json()})))
+.then(([q,a,f,m,ep])=>{Q=q;AFF=a;FC=f;META=m;EP=ep;
  document.getElementById("stamp").innerHTML=`Données du ${esc(m.built_at)}<br>1er tour : 18 avril 2027<br>2nd tour : 2 mai 2027`;
- renderThemes();renderVotes();renderJustice();renderFC();renderContro();renderMethode();
- const h0=(location.hash||"").slice(1);if(["themes","affinite","votes","justice","factchecks","controverses","methode"].includes(h0))show(h0);})
+ renderThemes();renderVotes();renderEP();renderJustice();renderFC();renderContro();renderMethode();
+ const h0=(location.hash||"").slice(1);if(["themes","affinite","duel","votes","justice","factchecks","controverses","methode"].includes(h0))show(h0);})
 .catch(err=>{document.getElementById("v-themes").innerHTML=`<p class="note">Les données n'ont pas pu être chargées (${esc(err.message)}). Recharge la page ; si le problème persiste, les fichiers de données manquent dans la publication.</p>`});

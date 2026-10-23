@@ -15,6 +15,7 @@ DELAY = 4.0          # Poligraph renvoie 429 à 1 req/s
 MAX_RETRY = 4
 PG = "https://poligraph.fr"
 MV = "https://monvote2027.fr"
+HTV = "https://github.com/HowTheyVote/data/releases/latest/download"
 
 CANDIDATS = {  # slug Poligraph : slug MonVote2027
     "marine-le-pen": "le-pen", "jean-luc-melenchon": "melenchon",
@@ -38,6 +39,9 @@ def jobs():
     yield "monvote/donnees.html", f"{MV}/donnees"
     for mv in CANDIDATS.values():
         yield f"monvote/candidat/{mv}.html", f"{MV}/candidat/{mv}"
+    # Parlement européen : export hebdomadaire de HowTheyVote.eu (licence ODbL), hébergé sur GitHub
+    for t in ("votes", "member_votes", "oeil_subject_votes", "oeil_subjects"):
+        yield f"europarl/{t}.csv.gz", f"{HTV}/{t}.csv.gz"
     # API JSON (non documentée mais utilisée par le serveur MCP officiel de Poligraph)
     yield "poligraph/api/election_presidentielle_2027.json", f"{PG}/api/elections/presidentielle-2027"
     # NB : les pages HTML de Poligraph (mesures des programmes) sont protégées par un défi anti-robot
@@ -46,7 +50,7 @@ def jobs():
 def fetch(url):
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
     try:
-        with urllib.request.urlopen(req, timeout=60) as r:
+        with urllib.request.urlopen(req, timeout=300) as r:
             return r.status, r.headers.get("Content-Type", ""), r.read(), None
     except urllib.error.HTTPError as e:
         return e.code, (e.headers.get("Content-Type", "") if e.headers else ""), b"", (e.headers.get("Retry-After") if e.headers else None)

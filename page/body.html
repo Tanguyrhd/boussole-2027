@@ -11,6 +11,7 @@
 <nav class="tabs" role="tablist">
   <button role="tab" data-v="themes" aria-selected="true">Thèmes</button>
   <button role="tab" data-v="affinite" aria-selected="false">Mon affinité</button>
+  <button role="tab" data-v="duel" aria-selected="false">Face à face</button>
   <button role="tab" data-v="votes" aria-selected="false">Promesses vs votes</button>
   <button role="tab" data-v="justice" aria-selected="false">Justice</button>
   <button role="tab" data-v="factchecks" aria-selected="false">Fact-checks</button>
@@ -20,7 +21,8 @@
 
 <section class="view" id="v-themes"><p class="loading">Chargement des données…</p></section>
 <section class="view" id="v-affinite" hidden></section>
-<section class="view" id="v-votes" hidden></section>
+<section class="view" id="v-duel" hidden></section>
+<section class="view" id="v-votes" hidden><div class="stackv" id="votes-an"></div><div class="stackv" id="votes-ep"></div></section>
 <section class="view" id="v-justice" hidden></section>
 <section class="view" id="v-factchecks" hidden></section>
 <section class="view" id="v-controverses" hidden></section>
