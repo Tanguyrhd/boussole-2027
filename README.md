@@ -32,3 +32,8 @@ La page porte `noindex` : elle n'apparaît pas dans les moteurs de recherche, ma
 - **Positions des candidats** : MonVote2027 (données ouvertes publiées sur monvote2027.fr/donnees).
 - **Affaires et fact-checks** : Poligraph (API publique). Les contenus restent la propriété de leurs auteurs.
 - **Sujets des fact-checks** : déduits automatiquement par mots-clés (`scripts/fc_sujets.py`), donc imparfaits.
+
+
+## Votes à l'Assemblée nationale
+
+`scripts/build_an.py` lit les fichiers `Scrutins.json.zip` des législatures 16 et 17 (open data de l'Assemblée, à placer dans `raw/an/scr16.zip` et `raw/an/scr17.zip`) et produit `data/web/an.json` : taux d'accord entre groupes par thème et liste des votes sur l'ensemble d'un texte ou motions. Licence Ouverte (Etalab).

@@ -108,4 +108,12 @@ table.mx td.mx-self{background:var(--mid);color:var(--muted)}
 .jgrid tbody th,.jgrid thead th:first-child{position:sticky;left:0;background:var(--bg);z-index:1}
 .linkbtn{all:unset;cursor:pointer;font-weight:600;text-decoration:underline dotted}.linkbtn:focus-visible{outline:2px solid var(--accent)}
 .ccard{scroll-margin-top:12px}
+.pswitch{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end;margin:4px 0}
+.pbars{display:grid;gap:6px}
+.pbar{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 44px;gap:10px;align-items:center;cursor:pointer;padding:4px;border-radius:4px;width:100%}
+.pbar:hover{background:var(--mid)}.pbar:focus-visible{outline:2px solid var(--accent)}
+.pn{font-weight:600;font-size:.9rem}.pn .fam{font-weight:400;display:block}
+.ptrack{height:18px;background:var(--mid);border-radius:3px;overflow:hidden}.pfill{display:block;height:100%;background:var(--accent)}
+#p-qui,#p-cmp{scroll-margin-top:12px}
+@media (max-width:480px){.pbar{grid-template-columns:minmax(0,104px) minmax(0,1fr) 40px}}
 </style>

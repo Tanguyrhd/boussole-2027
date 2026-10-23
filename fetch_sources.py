@@ -42,6 +42,9 @@ def jobs():
     # Parlement européen : export hebdomadaire de HowTheyVote.eu (licence ODbL), hébergé sur GitHub
     for t in ("votes", "member_votes", "oeil_subject_votes", "oeil_subjects"):
         yield f"europarl/{t}.csv.gz", f"{HTV}/{t}.csv.gz"
+    AN = "https://data.assemblee-nationale.fr/static/openData/repository"
+    for leg in ("16", "17"):
+        yield f"an/scr{leg}.zip", f"{AN}/{leg}/loi/scrutins/Scrutins.json.zip"
     # API JSON (non documentée mais utilisée par le serveur MCP officiel de Poligraph)
     yield "poligraph/api/election_presidentielle_2027.json", f"{PG}/api/elections/presidentielle-2027"
     # NB : les pages HTML de Poligraph (mesures des programmes) sont protégées par un défi anti-robot
