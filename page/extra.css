@@ -85,4 +85,10 @@ table.mx th{font-family:var(--f-mono);font-weight:500;font-size:.72rem;color:var
 table.mx td{text-align:center;min-width:40px;padding:7px 4px;border-radius:3px;border:0;color:var(--ink)}
 table.mx td.mx-self{background:var(--mid);color:var(--muted)}
 .sujrow .stack{min-width:4px}
+.sentence{font-size:1rem;line-height:1.5}
+.proof{border-left:2px solid var(--accent);padding-left:10px;display:grid;gap:3px;font-size:.88rem}
+.toc{display:flex;flex-wrap:wrap;gap:6px 16px;font-family:var(--f-display);font-stretch:90%;font-weight:600}
+.chip[disabled]{opacity:.4;cursor:default}
+#dit-vote{border-color:var(--accent)}
+#votes-an,#votes-ep,#dit-vote{scroll-margin-top:70px}
 </style>

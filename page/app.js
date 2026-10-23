@@ -139,29 +139,34 @@ let VF={cand:"all",pos:"all",theme:"all",view:"liste"};
 function voteRows(){const rows=[];Q.forEach(q=>C.forEach(c=>(q.src[c[0]]||[]).forEach(s=>{if(s.type.startsWith("Vote"))rows.push({q,c:c[0],s})})));return rows}
 function vposOK(r){const v=VF.pos;if(v==="all")return true;if(v==="accord"||v==="desaccord")return meKey(r.q,r.c)===v;return posKey(r.q.pos[r.c])===v}
 function vsrc(r){return `<div class="src"><span class="badge-type vote">${esc(r.s.type)}</span>${esc(r.s.date)} · ${esc(r.s.titre)}${r.s.url?` · <a href="${esc(r.s.url)}" target="_blank" rel="noopener">source</a>`:""}</div>${r.s.citation?`<div class="src">${esc(r.s.citation)}</div>`:""}`}
+const POSPHRASE={"2":"est tout à fait pour","1":"est plutôt pour","0":"est partagé(e) sur","-1":"est plutôt contre","-2":"est tout à fait contre"};
 function renderVotes(){
  const all=voteRows(), answered=Object.keys(S.a).length>0;
  const f=all.filter(r=>(VF.cand==="all"||r.c===VF.cand)&&vposOK(r)&&(VF.theme==="all"||r.q.theme===VF.theme)).sort((a,b)=>a.q.n-b.q.n||C.findIndex(c=>c[0]===a.c)-C.findIndex(c=>c[0]===b.c));
- const base=all.filter(r=>VF.theme==="all"||r.q.theme===VF.theme);
  const uniq=l=>[...new Map(l.map(r=>[r.q.qid+"|"+r.c,r])).values()];
- const summary=C.map(c=>{const l=uniq(base.filter(r=>r.c===c[0])),n=l.length,k=t=>l.filter(r=>posKey(r.q.pos[r.c])===t).length;
-  return `<button class="fcrow rowbtn${n?"":" few"}" data-vcand="${c[0]}" aria-pressed="${VF.cand===c[0]}"><span class="mono">${c[1]}</span><div class="stack">${n?["pour","neutre","contre"].map(t=>k(t)?`<span class="vk-${t}" style="width:${k(t)/n*100}%" title="${t} : ${k(t)}"></span>`:"").join(""):""}</div><span class="v mono">${n}</span></button>`}).join("");
+ const cnt=c=>uniq(all.filter(r=>r.c===c)).length;
  const themes=[...new Set(all.map(r=>r.q.theme))];
- const posOpts=[["all","Toutes"],["pour","Pour (+ / ++)"],["neutre","Neutre (0)"],["contre","Contre (− / −−)"]].concat(answered?[["accord","D'accord avec moi"],["desaccord","Pas d'accord avec moi"]]:[]);
+ const posOpts=[["all","Toutes"],["pour","Pour la phrase (+ / ++)"],["neutre","Partagé (0)"],["contre","Contre la phrase (− / −−)"]].concat(answered?[["accord","D'accord avec moi"],["desaccord","Pas d'accord avec moi"]]:[]);
+ const proof=r=>`<div class="proof"><span class="mono">Preuve citée</span> <span class="badge-type vote">${esc(r.s.type)}</span>${esc(r.s.date)} · ${esc(r.s.titre)}${r.s.url?` · <a href="${esc(r.s.url)}" target="_blank" rel="noopener">voir le scrutin</a>`:""}${r.s.citation?`<div class="src">${esc(r.s.citation)}</div>`:""}</div>`;
  let list;
- if(VF.view==="liste") list=f.map(r=>`<div class="vrow"><div><span class="mono">${NAME[r.c]}</span> · <span class="posb ${POSCLS[r.q.pos[r.c]]}">${r.q.pos[r.c]==null?"?":LAB[r.q.pos[r.c]+2]}</span> sur <b>Q${r.q.n}</b> ${esc(r.q.text)} <span class="fam">${THNAME[r.q.theme]}</span></div>${vsrc(r)}</div>`).join("");
+ if(VF.view==="liste") list=f.map(r=>`<div class="vrow"><div class="sentence"><b>${NAME[r.c]}</b> ${POSPHRASE[r.q.pos[r.c]]??"n'a pas de position sur"} <span class="posb ${POSCLS[r.q.pos[r.c]]}">${r.q.pos[r.c]==null?"?":LAB[r.q.pos[r.c]+2]}</span> « ${esc(r.q.text)} » <span class="fam">Q${r.q.n} · ${THNAME[r.q.theme]}</span></div>${proof(r)}</div>`).join("");
  else {const byQ=new Map();f.forEach(r=>{if(!byQ.has(r.q.qid))byQ.set(r.q.qid,[]);byQ.get(r.q.qid).push(r)});
   list=[...byQ.values()].map(rs=>{const q=rs[0].q,voted=new Set(rs.map(r=>r.c));
    const cols=[-2,-1,0,1,2].map(v=>`<div class="col c${v}"><div class="lab">${LAB[v+2]}</div>${C.filter(c=>q.pos[c[0]]===v).map(c=>`<span class="cand${voted.has(c[0])?" voted":" faded"}">${c[1]}</span>`).join("")}</div>`).join("");
-   return `<div class="q"><h4><span class="mono">Q${q.n}</span> ${esc(q.text)}</h4><div class="scale">${cols}</div><details><summary class="src">${rs.length>1?`Voir les ${rs.length} votes`:"Voir le vote"}</summary>${rs.map(r=>`<div class="vrow"><div><span class="mono">${NAME[r.c]}</span></div>${vsrc(r)}</div>`).join("")}</details></div>`}).join("")}
- document.getElementById("votes-an").innerHTML=`<div class="block"><h2>Promesses vs votes</h2><p class="lede">${uniq(all).length} positions sont justifiées par un vote réel à l'Assemblée ou au Sénat (le candidat lui-même ou son groupe). Ce sont les positions les plus solides : elles reposent sur un acte, pas sur une promesse.</p></div>
- <div class="block"><h3>Ce que chacun a voté</h3><p class="src">Pour chaque candidat, ses positions appuyées sur un vote : pour ou contre l'énoncé de la question. Clique sur une ligne pour filtrer la liste.</p>
- <div class="bars">${summary}</div><div class="legend"><span><span class="sw vk-pour"></span>Pour l'énoncé</span><span><span class="sw vk-neutre"></span>Neutre</span><span><span class="sw vk-contre"></span>Contre l'énoncé</span></div></div>
- <div class="filters">${sel("vf-cand","Candidat",[["all","Tous"],...C.map(c=>[c[0],c[1]])],VF.cand)}${sel("vf-pos","Position",posOpts,VF.pos)}${sel("vf-theme","Thème",[["all","Tous"],...THEMES.filter(t=>themes.includes(t.id)).map(t=>[t.id,t.name])],VF.theme)}${seg("vview",[["liste","Liste"],["question","Par question"]],VF.view)}</div>
+   return `<div class="q"><h4><span class="mono">Q${q.n}</span> ${esc(q.text)}</h4><div class="scale">${cols}</div><p class="src">En couleur : les candidats dont la position s'appuie sur un vote.</p><details><summary class="src">${rs.length>1?`Voir les ${rs.length} preuves`:"Voir la preuve"}</summary>${rs.map(r=>`<div class="vrow"><div><b>${NAME[r.c]}</b></div>${proof(r)}</div>`).join("")}</details></div>`}).join("")}
+ document.getElementById("votes-an").innerHTML=`<div class="block"><h2>Votes</h2>
+ <p class="lede">Ce que les candidats et leurs partis ont réellement voté. Un vote engage plus qu'une déclaration : c'est un acte, inscrit au procès-verbal.</p>
+ <div class="toc"><a href="#votes-an">À l'Assemblée et au Sénat</a><a href="#dit-vote">Dit / a voté</a><a href="#votes-ep">Au Parlement européen</a></div></div>
+ <div class="block"><h3>À l'Assemblée et au Sénat : les positions prouvées par un vote</h3>
+ <p>Sur MonVote2027, chaque position d'un candidat repose sur des sources (programme, interview, article…). Ici, on ne garde que les ${uniq(all).length} positions dont <b>l'une des preuves est un vote</b> au Parlement, du candidat ou de son groupe. Chaque ligne se lit : « tel candidat est pour ou contre telle phrase, et voici le vote qui le montre ».</p>
+ <p class="src">Le sens exact du vote (pour ou contre le texte) est décrit dans le résumé de MonVote2027 sous la preuve : un vote contre un texte peut justifier une position « pour » la phrase, selon la façon dont la question est tournée.</p></div>
+ <div class="chips" role="group" aria-label="Positions prouvées par candidat">${C.map(c=>`<button class="chip" data-vcand="${c[0]}" aria-pressed="${VF.cand===c[0]}"${cnt(c[0])?"":" disabled"}>${c[1]} <span class="mono">${cnt(c[0])}</span></button>`).join("")}</div>
+ <div class="filters">${sel("vf-pos","Position",posOpts,VF.pos)}${sel("vf-theme","Thème",[["all","Tous"],...THEMES.filter(t=>themes.includes(t.id)).map(t=>[t.id,t.name])],VF.theme)}${seg("vview",[["liste","Phrase par phrase"],["question","Par question"]],VF.view)}</div>
  ${!answered?'<p class="src">Réponds à des questions dans l\'onglet Thèmes pour pouvoir filtrer sur tes accords et désaccords.</p>':""}
- <p class="mono">${f.length} vote${f.length>1?"s":""} affiché${f.length>1?"s":""}</p>
- <div>${list||'<p class="note">Aucun vote ne correspond à ces filtres.</p>'}</div>
- <p class="note">Peu de votes à l'Assemblée pour Glucksmann, Philippe, Tondelier ou Zemmour : ils n'y siègent pas. L'absence de vote ne veut pas dire incohérence. Pour Glucksmann et les partis présents au Parlement européen, voir plus bas.</p>
+ <p class="mono">${f.length} preuve${f.length>1?"s":""}${VF.cand==="all"?"":" · "+NAME[VF.cand]}</p>
+ <div>${list||'<p class="note">Aucune preuve ne correspond à ces filtres.</p>'}</div>
+ <p class="note">Glucksmann, Philippe, Tondelier et Zemmour ne siègent pas à l'Assemblée : peu ou pas de votes ici, ce qui ne veut pas dire incohérence. Pour les votes européens, voir plus bas.</p>
+ <div class="card" id="dit-vote"><h3>Dit / a voté</h3><p>Ici viendront des cas vérifiés un par un, où l'on met côte à côte ce qu'un candidat promet et ce que lui ou son groupe a voté sur le même sujet, avec un verdict : cohérent ou incohérent.</p><p class="src">Rubrique en préparation.</p></div>
  <div class="card"><h3>Deux votes de groupe marquants</h3>
  <p><b>Loi immigration, 19 décembre 2023</b> : adoptée par 349 voix contre 186. RN et LR pour, gauche contre, majorité présidentielle divisée. Sans les 88 voix RN, le texte n'avait pas la majorité absolue. <a class="src" href="https://datan.fr/votes/legislature-16/vote_3213" target="_blank" rel="noopener">Datan</a></p>
  <p><b>${T("censure","Motion de censure")} sur les retraites, 20 mars 2023</b> : rejetée à 9 voix près (278 sur 287 nécessaires). Gauche, LIOT, RN et 19 LR sur 61 pour ; Renaissance, MoDem et Horizons ne l'ont pas votée. <a class="src" href="https://datan.fr/votes/legislature-16/vote_1240" target="_blank" rel="noopener">Datan</a></p></div>`;
@@ -193,7 +198,7 @@ function renderEP(){
   <div class="eppos"><span>${EPN[EF.a]} ${epBadge(epPos(v,EF.a))}</span><span>${EPN[EF.b]} ${epBadge(epPos(v,EF.b))}</span></div>
   <details><summary class="src">Toutes les délégations · résultat ${v.pour} pour, ${v.contre} contre, ${v.abst} abst.</summary><div class="eppos small">${D.map(d=>`<span>${EPSHORT[d]} ${epBadge(epPos(v,d))}${v.deleg[d.slice(2)]&&v.deleg[d.slice(2)][1]<0.75?` <span class="fam">divisés (${Math.round(v.deleg[d.slice(2)][1]*100)} %)</span>`:""}</span>`).join("")}</div></details>
   <div class="src"><a href="https://howtheyvote.eu/votes/${v.id}" target="_blank" rel="noopener">Détail du vote sur HowTheyVote.eu</a></div></div>`).join("");
- box.innerHTML=`<div class="block"><h2>Au Parlement européen</h2><p class="lede">${EP.length} votes finaux depuis juillet 2019 : les vrais votes personnels de Glucksmann et Bardella, eurodéputés, et la position majoritaire des eurodéputés français de chaque parti.</p></div>
+ box.innerHTML=`<div class="block"><h2>Au Parlement européen : qui vote avec qui</h2><p class="lede">${EP.length} votes finaux depuis juillet 2019 : les vrais votes personnels de Glucksmann et Bardella, eurodéputés, et la position majoritaire des eurodéputés français de chaque parti.</p></div>
  <p class="note">Roussel (PCF) et Ruffin n'ont pas d'eurodéputés : ils n'apparaissent pas ici. Un vote de délégation dit ce qu'a voté le parti à Strasbourg, pas forcément le candidat lui-même. Les intitulés sont en anglais dans la source.</p>
  <div class="block"><h3>Qui vote avec qui</h3><p class="src">Part des votes où deux délégations ont eu la même position majoritaire (pour, contre ou abstention)${EF.theme==="all"?"":`, thème « ${THEP(EF.theme)} »`}. Plus la case est foncée, plus elles votent pareil (couleur graduée de 30 % à 100 %).</p>${matrix}</div>
  <div class="block"><h3>Comparer deux votants</h3>
