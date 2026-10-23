@@ -209,6 +209,23 @@ table.mx td.mx-self{background:var(--mid);color:var(--muted)}
 .chip[disabled]{opacity:.4;cursor:default}
 #dit-vote{border-color:var(--accent)}
 #votes-an,#votes-ep,#dit-vote{scroll-margin-top:70px}
+.jbars{display:grid;gap:6px;margin:10px 0}
+.jbar{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,92px) minmax(0,1fr) 28px;gap:10px;align-items:center;cursor:pointer;padding:3px 4px;border-radius:4px;width:100%}
+.jbar:hover{background:var(--mid)}.jbar:focus-visible{outline:2px solid var(--accent)}
+.jn{font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jtrack{display:flex;height:22px;border-radius:3px;overflow:hidden;background:var(--mid)}
+.js{display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.7rem;color:#fff;min-width:14px}
+.js-def{background:var(--neg)}.js-nondef{background:var(--warn)}.js-cours{background:color-mix(in srgb,var(--ink) 45%,var(--surface))}.js-relaxe{background:var(--pos)}
+.jzero{font-family:var(--f-mono);font-size:.7rem;color:var(--muted);align-self:center;padding-left:8px}
+.jd{display:inline-block;width:12px;height:12px;border-radius:50%;margin:1px;vertical-align:-2px}
+.jgrid{border-collapse:collapse;font-size:.82rem}
+.jgrid th,.jgrid td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left}
+.jgrid td{text-align:center;min-width:34px}
+.jfam{font-family:var(--f-mono);font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-left:1px solid var(--line)}
+.jcat{vertical-align:bottom;font-weight:500;font-size:.74rem;line-height:1.2;max-width:84px;min-width:60px;text-align:center!important}
+.jgrid tbody th,.jgrid thead th:first-child{position:sticky;left:0;background:var(--bg);z-index:1}
+.linkbtn{all:unset;cursor:pointer;font-weight:600;text-decoration:underline dotted}.linkbtn:focus-visible{outline:2px solid var(--accent)}
+.ccard{scroll-margin-top:12px}
 </style>
 </head>
 <body>
@@ -526,20 +543,47 @@ function renderDuel(){
 const STCLS={"définitive":"def","non définitive":"nondef","relaxe":"relaxe","en cours":"cours"};
 const STLAB={"définitive":"condamnation définitive","non définitive":"condamnation non définitive","relaxe":"relaxe / non-lieu","en cours":"procédure en cours"};
 function affHTML(a){return `<div class="aff"><div class="row"><span class="st ${STCLS[a.stade]}">${STLAB[a.stade]}</span><span class="fam">${esc(a.categorie)} · ${a.famille}</span></div><div><b>${esc(a.titre)}</b></div><div class="src">${esc(a.statut)}${a.date?" · "+esc(a.date):""}${a.juridiction?" · "+esc(a.juridiction):""}${a.peine?" · "+esc(a.peine):""}</div>${a.description?`<div style="font-size:.92rem">${esc(a.description)}</div>`:""}<div class="src"><a href="${esc(a.page)}" target="_blank" rel="noopener">Fiche Poligraph</a>${a.source?` · <a href="${esc(a.source)}" target="_blank" rel="noopener">première source</a>`:""}</div></div>`}
+const MIS=["DIRECT","INDIRECT","MENTIONED_ONLY"], STORD=["définitive","non définitive","en cours","relaxe"];
+const JFAM=[["all","Toutes"],["probité","Probité"],["expression","Expression"],["autre","Autres"]];
+let JF={fam:"all"};
 function renderJustice(){
  const order=[...C.map(c=>c[0]),"bardella"];
+ const mis=AFF.filter(a=>MIS.includes(a.role_code));
+ /* 1. Barres empilées : affaires où la personne est mise en cause, par stade */
+ const fl=mis.filter(a=>JF.fam==="all"||a.famille===JF.fam);
+ const rows=order.map(id=>[id,STORD.map(st=>fl.filter(a=>a.cand===id&&a.stade===st).length)]).map(([id,v])=>[id,v,v.reduce((x,y)=>x+y,0)]).sort((a,b)=>b[2]-a[2]||b[1][0]-a[1][0]);
+ const max=Math.max(1,...rows.map(r=>r[2]));
+ const bars=`<div class="jbars" role="list">${rows.map(([id,v,t])=>`<button class="jbar" role="listitem" data-jcand="${id}" aria-label="${NAME[id]} : ${t} affaire${t>1?"s":""}, ${STORD.map((st,i)=>v[i]+" "+STLAB[st]).join(", ")}"><span class="mono jn">${NAME[id]}</span><span class="jtrack">${t?STORD.map((st,i)=>v[i]?`<span class="js js-${STCLS[st]}" style="width:${v[i]/max*100}%">${v[i]}</span>`:"").join(""):'<span class="jzero">aucune</span>'}</span><span class="v">${t}</span></button>`).join("")}</div>`;
+ /* 2. Carte de synthèse : candidat × type d'infraction, une pastille par affaire */
+ const FORD=["probité","expression","autre"];
+ const cats=[...new Set(mis.map(a=>a.categorie))].sort((x,y)=>{const fx=FORD.indexOf(mis.find(a=>a.categorie===x).famille),fy=FORD.indexOf(mis.find(a=>a.categorie===y).famille);return fx-fy||mis.filter(a=>a.categorie===y).length-mis.filter(a=>a.categorie===x).length});
+ const famOf=c=>mis.find(a=>a.categorie===c).famille;
+ const who=order.filter(id=>mis.some(a=>a.cand===id));
+ const dot=a=>`<span class="jd js-${STCLS[a.stade]}" title="${esc(a.titre)} — ${STLAB[a.stade]}${a.date?" ("+esc(a.date.slice(0,4))+")":""}"></span>`;
+ const grid=`<div class="tbl"><table class="jgrid"><thead><tr><th></th>${FORD.map(f=>{const n=cats.filter(c=>famOf(c)===f).length;return n?`<th colspan="${n}" class="jfam">${f}</th>`:""}).join("")}</tr><tr><th></th>${cats.map(c=>`<th class="jcat"><span>${esc(c)}</span></th>`).join("")}</tr></thead>
+ <tbody>${who.map(id=>`<tr><th><button class="linkbtn" data-jcand="${id}">${NAME[id]}</button></th>${cats.map(c=>{const l=mis.filter(a=>a.cand===id&&a.categorie===c).sort((x,y)=>STORD.indexOf(x.stade)-STORD.indexOf(y.stade));return `<td>${l.map(dot).join("")}</td>`}).join("")}</tr>`).join("")}</tbody></table></div>`;
+ const none=order.filter(id=>!mis.some(a=>a.cand===id)).map(id=>NAME[id]);
  const cards=order.map(id=>{
-  const mine=AFF.filter(a=>a.cand===id&&["DIRECT","INDIRECT","MENTIONED_ONLY"].includes(a.role_code));
+  const mine=AFF.filter(a=>a.cand===id&&MIS.includes(a.role_code));
   const other=AFF.filter(a=>a.cand===id&&["PLAINTIFF","VICTIM"].includes(a.role_code));
   const k=s=>mine.filter(a=>a.stade===s).length;
   const prob=mine.filter(a=>a.famille==="probité"&&(a.stade==="définitive"||a.stade==="non définitive")).length;
-  return `<details class="ccard"${id==="le_pen"?" open":""}><summary><h3>${NAME[id]}${id==="bardella"?' <span class="fam">pressenti Premier ministre</span>':""}</h3><span class="counts">${mine.length} mis en cause · ${k("définitive")} déf. · ${k("non définitive")} non déf. · ${k("en cours")} en cours · ${k("relaxe")} relaxe · probité condamnée : ${prob}</span></summary>
+  return `<details class="ccard" id="jc-${id}"${id==="le_pen"?" open":""}><summary><h3>${NAME[id]}${id==="bardella"?' <span class="fam">pressenti Premier ministre</span>':""}</h3><span class="counts">${mine.length} mis en cause · ${k("définitive")} déf. · ${k("non définitive")} non déf. · ${k("en cours")} en cours · ${k("relaxe")} relaxe · probité condamnée : ${prob}</span></summary>
   ${mine.length?mine.map(affHTML).join(""):'<p class="src" style="padding-top:10px">Aucune affaire où il ou elle est mis en cause dans la base Poligraph.</p>'}
   ${other.length?`<p class="mono" style="margin-top:12px">Comme plaignant ou victime</p>${other.map(affHTML).join("")}`:""}</details>`}).join("");
- document.getElementById("v-justice").innerHTML=`<div class="block"><h2>Justice</h2><p class="lede">Affaires recensées par Poligraph, classées par stade. Une condamnation non définitive peut encore être annulée ; une enquête n'est pas une culpabilité. La présomption d'innocence s'applique.</p>
- <div class="legend"><span><span class="st def">définitive</span> plus de recours possible</span><span><span class="st nondef">non définitive</span> appel ou pourvoi en cours</span><span><span class="st cours">en cours</span> enquête, instruction, plainte</span><span><span class="st relaxe">relaxe</span> relaxe, non-lieu, classement</span></div></div>
+ const leg=`<div class="legend">${STORD.map(st=>`<span><span class="jd js-${STCLS[st]}"></span> ${STLAB[st]}</span>`).join("")}</div>`;
+ const nOther=AFF.filter(a=>["PLAINTIFF","VICTIM"].includes(a.role_code)).length;
+ document.getElementById("v-justice").innerHTML=`<div class="block"><h2>Justice</h2><p class="lede">Affaires recensées par Poligraph, classées par stade. Une condamnation non définitive peut encore être annulée ; une enquête n'est pas une culpabilité. La présomption d'innocence s'applique.</p></div>
+ <div class="block"><h3>Qui est mis en cause, et où en est la justice</h3>
+ <div class="filters"><div class="fctl"><span class="mono">Type d'affaire</span><div class="seg" role="group">${JFAM.map(([v,t])=>`<button data-jfam="${v}" aria-pressed="${JF.fam===v}">${t}</button>`).join("")}</div></div></div>
+ ${leg}${bars}
+ <p class="src">Seules les affaires où la personne est <b>mise en cause</b> sont comptées. Les ${nOther} affaires où un candidat est plaignant ou victime sont listées dans sa fiche, plus bas. Clique sur un nom pour ouvrir sa fiche.</p></div>
+ <div class="block"><h3>Quel type d'affaire</h3>
+ <p class="src">Une pastille = une affaire, colorée selon son stade. Survole-la (ou touche-la) pour voir son titre. Sur téléphone, fais défiler le tableau vers la droite.</p>${grid}
+ ${none.length?`<p class="src">Aucune affaire où ils sont mis en cause : ${none.join(", ")}.</p>`:""}</div>
  <p class="note">Distingue deux familles : la <b>probité</b> (détournement, emploi fictif, favoritisme…) concerne l'usage de l'argent public ; l'<b>expression</b> (diffamation, injure, incitation à la haine) concerne des propos. Les mettre dans le même compteur fausse la comparaison.</p>
- ${cards}<p class="src">Source : <a href="https://poligraph.fr/affaires" target="_blank" rel="noopener">Poligraph, export des affaires</a> (base citoyenne : elle peut être incomplète).</p>`;
+ <div class="block"><h3>Le détail, candidat par candidat</h3></div>
+ ${cards}<p class="src">Source : <a href="https://poligraph.fr/affaires" target="_blank" rel="noopener">Poligraph, export des affaires</a> (base citoyenne : elle peut être incomplète). Le nombre d'affaires dépend aussi de la durée de carrière et de l'exposition médiatique.</p>`;
 }
 
 const VORD=["TRUE","MOSTLY_TRUE","HALF_TRUE","MISLEADING","OUT_OF_CONTEXT","MOSTLY_FALSE","FALSE","UNVERIFIABLE"];
@@ -671,6 +715,8 @@ document.addEventListener("change",e=>{const id=e.target.id,v=e.target.value;
  if(id.startsWith("du-")){DU[id.slice(3)]=v;renderDuel()}});
 let epT;document.addEventListener("input",e=>{if(e.target.id==="ep-q"){clearTimeout(epT);const v=e.target.value;epT=setTimeout(()=>{EF.q=v;EF.n=25;renderEP();const i=document.getElementById("ep-q");if(i){i.focus();i.setSelectionRange(v.length,v.length)}},250)}});
 document.addEventListener("click",e=>{
+ const jf=e.target.closest("[data-jfam]");if(jf){JF.fam=jf.dataset.jfam;renderJustice();return}
+ const jc=e.target.closest("[data-jcand]");if(jc){const d=document.getElementById("jc-"+jc.dataset.jcand);if(d){d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})}return}
  const s=e.target.closest("[data-seg]");if(s){if(s.dataset.seg==="vview"){VF.view=s.dataset.val;renderVotes()}else{FF.mode=s.dataset.val;FF.verdict="all";renderFC()}return}
  const vc=e.target.closest("[data-vcand]");if(vc){VF.cand=VF.cand===vc.dataset.vcand?"all":vc.dataset.vcand;renderVotes();return}
  const fc=e.target.closest("[data-fccand]");if(fc){FF.cand=FF.cand===fc.dataset.fccand?"all":fc.dataset.fccand;renderFC();return}

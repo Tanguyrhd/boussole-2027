@@ -91,4 +91,21 @@ table.mx td.mx-self{background:var(--mid);color:var(--muted)}
 .chip[disabled]{opacity:.4;cursor:default}
 #dit-vote{border-color:var(--accent)}
 #votes-an,#votes-ep,#dit-vote{scroll-margin-top:70px}
+.jbars{display:grid;gap:6px;margin:10px 0}
+.jbar{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,92px) minmax(0,1fr) 28px;gap:10px;align-items:center;cursor:pointer;padding:3px 4px;border-radius:4px;width:100%}
+.jbar:hover{background:var(--mid)}.jbar:focus-visible{outline:2px solid var(--accent)}
+.jn{font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jtrack{display:flex;height:22px;border-radius:3px;overflow:hidden;background:var(--mid)}
+.js{display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.7rem;color:#fff;min-width:14px}
+.js-def{background:var(--neg)}.js-nondef{background:var(--warn)}.js-cours{background:color-mix(in srgb,var(--ink) 45%,var(--surface))}.js-relaxe{background:var(--pos)}
+.jzero{font-family:var(--f-mono);font-size:.7rem;color:var(--muted);align-self:center;padding-left:8px}
+.jd{display:inline-block;width:12px;height:12px;border-radius:50%;margin:1px;vertical-align:-2px}
+.jgrid{border-collapse:collapse;font-size:.82rem}
+.jgrid th,.jgrid td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left}
+.jgrid td{text-align:center;min-width:34px}
+.jfam{font-family:var(--f-mono);font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-left:1px solid var(--line)}
+.jcat{vertical-align:bottom;font-weight:500;font-size:.74rem;line-height:1.2;max-width:84px;min-width:60px;text-align:center!important}
+.jgrid tbody th,.jgrid thead th:first-child{position:sticky;left:0;background:var(--bg);z-index:1}
+.linkbtn{all:unset;cursor:pointer;font-weight:600;text-decoration:underline dotted}.linkbtn:focus-visible{outline:2px solid var(--accent)}
+.ccard{scroll-margin-top:12px}
 </style>
