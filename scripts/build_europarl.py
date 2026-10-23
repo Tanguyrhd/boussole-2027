@@ -7,7 +7,7 @@ Pour chaque vote final (is_main) : titre, date, résultat, thèmes, vote personn
 Glucksmann et Bardella (eurodéputés), et position majoritaire de la délégation française
 de chaque parti lié à un candidat.
 """
-import csv, gzip, io, json
+import csv, gzip, io, json, re
 from collections import Counter, defaultdict
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
@@ -39,7 +39,13 @@ def themes_of(codes, title):
     th |= {t for k, t in KEYWORDS if k in low}
     return sorted(th) or ["autre"]
 
-votes = {v["id"]: v for v in csv.DictReader(open_gz("votes")) if v["is_main"] == "True"}
+# HowTheyVote marque aussi « principaux » des votes qui ne portent pas sur le texte lui-même :
+# propositions de rejet (voter POUR = rejeter le texte, sens inversé) et décisions de procédure.
+# Les garder ferait lire « contre » un vote qui est en réalité « pour le texte ». On les écarte.
+NON_TEXTE = re.compile(r"^(?:Proposition de rejet|Rejet\b|Décision d'engager des négociations|Demande de décision d'urgence)", re.I)
+votes = {v["id"]: v for v in csv.DictReader(open_gz("votes"))
+         if v["is_main"] == "True" and not NON_TEXTE.match(v["description"])
+         and v["amendment_subject"] != "Proposal for rejection"}
 subj = defaultdict(list)
 for r in csv.DictReader(open_gz("oeil_subject_votes")):
     if r["vote_id"] in votes: subj[r["vote_id"]].append(r["oeil_subject_code"])
