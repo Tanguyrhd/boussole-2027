@@ -1,0 +1,9 @@
+# Téléchargements bruts (lourds, régénérables avec fetch_sources.py)
+/raw/
+/raw_*/
+# Intermédiaires régénérables (data/web est recopié dans docs/data)
+/data/
+# Version artifact Claude (la version publique est docs/)
+/page/index.html
+/page/data/
+__pycache__/

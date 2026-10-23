@@ -1,0 +1,30 @@
+
+<div class="wrap">
+<header class="top">
+  <div>
+    <h1>Boussole 2027</h1>
+    <p class="lede">Les 10 candidats en tête des sondages, comparés sur 100 questions. Tu te positionnes, tu pondères les thèmes, et la page calcule où tu te situes. Clique sur un candidat pour voir les sources de sa position. Les mots soulignés en pointillé s'expliquent au clic.</p>
+  </div>
+  <div class="stamp" id="stamp">1er tour : 18 avril 2027<br>2nd tour : 2 mai 2027</div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" data-v="themes" aria-selected="true">Thèmes</button>
+  <button role="tab" data-v="affinite" aria-selected="false">Mon affinité</button>
+  <button role="tab" data-v="votes" aria-selected="false">Promesses vs votes</button>
+  <button role="tab" data-v="justice" aria-selected="false">Justice</button>
+  <button role="tab" data-v="factchecks" aria-selected="false">Fact-checks</button>
+  <button role="tab" data-v="controverses" aria-selected="false">Controverses</button>
+  <button role="tab" data-v="methode" aria-selected="false">Méthode</button>
+</nav>
+
+<section class="view" id="v-themes"><p class="loading">Chargement des données…</p></section>
+<section class="view" id="v-affinite" hidden></section>
+<section class="view" id="v-votes" hidden></section>
+<section class="view" id="v-justice" hidden></section>
+<section class="view" id="v-factchecks" hidden></section>
+<section class="view" id="v-controverses" hidden></section>
+<section class="view" id="v-methode" hidden></section>
+</div>
+
+<div id="pop" hidden role="dialog" aria-live="polite"><button class="x" aria-label="Fermer">×</button><h4></h4><p class="def"></p><p class="why"></p></div>
