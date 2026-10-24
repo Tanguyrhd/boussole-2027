@@ -307,7 +307,7 @@ function renderJustice(){
   const other=AFF.filter(a=>a.cand===id&&["PLAINTIFF","VICTIM"].includes(a.role_code));
   const k=s=>mine.filter(a=>a.stade===s).length;
   const prob=mine.filter(a=>a.famille==="probité"&&(a.stade==="définitive"||a.stade==="non définitive")).length;
-  return `<details class="ccard" id="jc-${id}"${id==="le_pen"?" open":""}><summary><h3>${NAME[id]}${id==="bardella"?' <span class="fam">pressenti Premier ministre</span>':""}</h3><span class="counts">${mine.length} mis en cause · ${k("définitive")} déf. · ${k("non définitive")} non déf. · ${k("en cours")} en cours · ${k("relaxe")} relaxe · probité condamnée : ${prob}</span></summary>
+  return `<details class="ccard" id="jc-${id}"><summary><h3>${NAME[id]}${id==="bardella"?' <span class="fam">pressenti Premier ministre</span>':""}</h3><span class="counts">${mine.length} mis en cause · ${k("définitive")} déf. · ${k("non définitive")} non déf. · ${k("en cours")} en cours · ${k("relaxe")} relaxe · probité condamnée : ${prob}</span></summary>
   ${mine.length?mine.map(affHTML).join(""):'<p class="src" style="padding-top:10px">Aucune affaire où il ou elle est mis en cause dans la base Poligraph.</p>'}
   ${other.length?`<p class="mono" style="margin-top:12px">Comme plaignant ou victime</p>${other.map(affHTML).join("")}`:""}</details>`}).join("");
  const leg=`<div class="legend">${STORD.map(st=>`<span><span class="jd js-${STCLS[st]}"></span> ${STLAB[st]}</span>`).join("")}</div>`;
