@@ -171,4 +171,7 @@ table.mx td.mx-self{background:var(--mid);color:var(--muted)}
 .dv-date{font-size:.75rem;color:var(--muted)}.dv-qui{font-weight:600;font-size:.92rem;margin-top:2px}
 .dv-side p{margin:.4em 0}
 .dv-nuance{font-size:.92rem;background:var(--mid);border-radius:6px;padding:8px 10px;margin:10px 0 4px}
+.avcard{background:color-mix(in srgb,var(--mid) 40%,var(--surface));border-style:dashed}
+.avcard .dv-side{border-left-color:var(--line)}.avcard .dv-side+.dv-side{border-left-color:var(--warn)}
+#a-verifier{scroll-margin-top:60px;margin-top:22px}
 </style>

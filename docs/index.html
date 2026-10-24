@@ -289,6 +289,9 @@ table.mx td.mx-self{background:var(--mid);color:var(--muted)}
 .dv-date{font-size:.75rem;color:var(--muted)}.dv-qui{font-weight:600;font-size:.92rem;margin-top:2px}
 .dv-side p{margin:.4em 0}
 .dv-nuance{font-size:.92rem;background:var(--mid);border-radius:6px;padding:8px 10px;margin:10px 0 4px}
+.avcard{background:color-mix(in srgb,var(--mid) 40%,var(--surface));border-style:dashed}
+.avcard .dv-side{border-left-color:var(--line)}.avcard .dv-side+.dv-side{border-left-color:var(--warn)}
+#a-verifier{scroll-margin-top:60px;margin-top:22px}
 </style>
 </head>
 <body>
@@ -583,6 +586,18 @@ const DITVOTE=[
   dit:{date:"2023, puis programme 2027",qui:"François Ruffin",txt:"En 2023 : « Je ne suis pas favorable à une relance nucléaire. » Programme 2027 : « Nous poursuivrons aussi la construction des six réacteurs EPR2. »",src:[["Interview, 2023","https://actu.orange.fr/videos/politique/francois-ruffin-je-ne-suis-pas-favorable-a-une-relance-nucleaire-CNT000001JENgT.html"],["Programme 2027","https://nouspresident.fr/travaillisme-ecologique/"]]},
   nuance:"Ses votes de 2023 étaient cohérents avec ses déclarations de l'époque : c'est un changement de position, assumé dans son programme."}
 ];
+/* Pistes à vérifier : écart repéré et vote confirmé, mais déclaration introuvable, position nuancée ou lien indirect.
+   Ce ne sont PAS des incohérences établies. */
+const AVERIF=[
+ {cand:"le_pen",parti:"RN",sujet:"Crime d'écocide",etabli:"Jordan Bardella et les eurodéputés RN votent pour la directive européenne sur la protection de l'environnement par le droit pénal (27/02/2024), qui vise des atteintes « comparables à un écocide ».",src:[["Vote du 27/02/2024","https://howtheyvote.eu/votes/164462"]],manque:"MonVote classe Marine Le Pen « tout à fait contre » le crime d'écocide, mais sa source ne parle pas d'écocide. Nous n'avons trouvé aucune déclaration du RN sur le sujet."},
+ {cand:"philippe",parti:"Horizons",sujet:"Fin des voitures thermiques neuves en 2035",etabli:"Les eurodéputés Horizons (Gilles Boyer, Nathalie Loiseau) votent pour l'objectif de 2035 au Parlement européen (08/06/2022).",src:[["Vote du 08/06/2022","https://howtheyvote.eu/votes/144009"]],manque:"MonVote place Édouard Philippe « plutôt contre » mais ne cite aucune source, et nous n'en avons pas trouvé."},
+ {cand:"glucksmann",parti:"Place publique",sujet:"Nouveaux réacteurs nucléaires",etabli:"Raphaël Glucksmann vote contre la résolution européenne sur les petits réacteurs nucléaires (12/12/2023).",src:[["Vote du 12/12/2023","https://howtheyvote.eu/votes/162205"]],manque:"Sa position publiée est nuancée : nucléaire « énergie de transition » (programme 2024), « il faudra les deux », nucléaire et renouvelables (2026). L'écart avec un vote contre n'est pas net."},
+ {cand:"glucksmann",parti:"groupe socialiste",sujet:"Âge de départ à la retraite",etabli:"Le groupe socialiste vote l'abrogation de la réforme de 2023 (résolution du 05/06/2025, 44 voix sur 44).",src:[["Scrutin du 05/06/2025","https://www.assemblee-nationale.fr/dyn/17/scrutins/2257"]],manque:"Glucksmann veut que « ceux qui ont les carrières les plus hachées » puissent partir plus tôt et que les cadres partent plus tard (2026). Et Place publique ne pèse qu'une petite partie du groupe socialiste."},
+ {cand:"glucksmann",parti:"Place publique",sujet:"Expulsion des étrangers en situation irrégulière",etabli:"Raphaël Glucksmann vote contre le règlement européen « retour » (17/06/2026).",src:[["Vote du 17/06/2026","https://howtheyvote.eu/votes/194134"]],manque:"MonVote le place « plutôt pour » des expulsions systématiques, d'après une interview sur l'application des OQTF ; il y rejette aussi une « logique purement sécuritaire ». Pas d'explication de vote trouvée."},
+ {cand:"retailleau",parti:"LR",sujet:"Crime d'écocide",etabli:"La majorité de droite du Sénat supprime le délit d'écocide de la loi Climat (25/06/2021) ; en 2024, les eurodéputés LR votent la directive pénale environnementale.",src:[["Public Sénat, 25/06/2021","https://www.publicsenat.fr/article/parlementaire/loi-climat-les-senateurs-enterinent-la-suppression-du-delit-d-ecocide-189776"],["Vote du 27/02/2024","https://howtheyvote.eu/votes/164462"]],manque:"Écart entre élus LR, mais Bruno Retailleau n'est pas cité dans ce débat, et la directive ne crée pas de crime d'écocide en droit français."},
+ {cand:"retailleau",parti:"LR",sujet:"Contrôles aux frontières de l'Union",etabli:"6 eurodéputés LR sur 8 votent contre la réforme du code frontières Schengen (24/04/2024).",src:[["Vote du 24/04/2024","https://howtheyvote.eu/votes/168272"]],manque:"Deux semaines plus tôt, LR avait rejeté le Pacte migratoire en le jugeant « trop laxiste » (François-Xavier Bellamy, Public Sénat). Pour le code Schengen, aucune explication n'a été trouvée : probablement un vote contre un texte jugé trop faible."},
+ {cand:"ruffin",parti:"Debout",sujet:"Soutien militaire à l'Ukraine",etabli:"François Ruffin vote contre la déclaration du Gouvernement sur l'accord de sécurité franco-ukrainien (12/03/2024).",src:[["Scrutin du 12/03/2024","https://www.assemblee-nationale.fr/dyn/16/scrutins/3461"]],manque:"Un message de 2025, cité par MonVote, le dirait favorable à « fournir Kyev en armes » : ce serait une évolution. Nous n'avons pas pu consulter ce message pour le vérifier."}
+];
 const DVLAB={inc:["Incohérence","def"],evo:["A changé de position","nondef"]};
 function ditVoteHTML(){
  const side=(lab,x)=>`<div class="dv-side"><div class="dv-lab">${lab}</div><div class="mono dv-date">${esc(x.date)}</div><div class="dv-qui">${esc(x.qui)}</div><p>${esc(x.txt)}</p><div class="src">${x.src.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${esc(t)}</a>`).join(" · ")}</div></div>`;
@@ -595,9 +610,16 @@ function ditVoteHTML(){
   <p class="src"><a href="${issue(c)}" target="_blank" rel="noopener">Signaler une erreur sur ce cas</a></p></article>`}).join("");
  const cnt=C.map(c=>[c[1],DITVOTE.filter(d=>d.cand===c[0]).length]);
  return `<div class="block"><h3>Dit / a voté</h3><p>Ce qu'un candidat ou son parti affirme, à côté de ce que lui ou son groupe a réellement voté sur le même sujet.</p>
- <p class="src">Comment ces cas ont été choisis : une comparaison automatique des 100 positions MonVote2027 avec les votes à l'Assemblée et au Parlement européen a produit 74 alertes. Chacune a été relue à la main : la plupart tombent à l'examen (vote tactique, texte plus large que la question, vote contre un texte jugé trop faible, désaccord sur le moyen). Restent ${DITVOTE.length} cas, retenus seulement si le vote est confirmé sur le registre officiel et la déclaration retrouvée à sa source.</p></div>
- <div class="note">Aucun cas pour un candidat ne veut pas dire qu'il est cohérent. Les votes sur l'économie et le budget, qui passent surtout par des amendements, ne sont pas encore examinés, et plusieurs candidats n'ont jamais siégé au Parlement. Cas par candidat à ce jour : ${cnt.map(([n,k])=>`${n} ${k}`).join(" · ")}.</div>
- <div class="dvcards">${cards}</div>`;
+ <p class="src">Comment ces cas ont été choisis : une comparaison automatique des 100 positions MonVote2027 avec les votes à l'Assemblée et au Parlement européen a produit 74 alertes. Chacune a été relue à la main : la plupart tombent à l'examen (vote tactique, texte plus large que la question, vote contre un texte jugé trop faible, désaccord sur le moyen). Restent ${DITVOTE.length} cas, retenus seulement si le vote est confirmé sur le registre officiel et la déclaration retrouvée à sa source, et ${AVERIF.length} <a href="#a-verifier">pistes à vérifier</a>. Les votes d'amendements sur l'économie, le budget et les retraites (2024-2026) ont aussi été examinés : les partis y votent presque toujours selon leurs positions, et aucun nouveau cas n'en ressort.</p></div>
+ <div class="note">Aucun cas pour un candidat ne veut pas dire qu'il est cohérent. Plusieurs candidats n'ont jamais siégé au Parlement, et les votes de 2022-2024 sur les amendements (retraites, loi immigration) ne sont pas encore examinés. Cas par candidat à ce jour : ${cnt.map(([n,k])=>`${n} ${k}`).join(" · ")}.</div>
+ <div class="dvcards">${cards}</div>
+ <div class="block" id="a-verifier"><h3>Pistes à vérifier</h3>
+ <p class="src">Ici, le vote est confirmé, mais l'écart avec ce que dit le candidat n'est pas établi : déclaration introuvable, position nuancée ou lien indirect. <b>Ce ne sont pas des incohérences.</b> Ce sont des questions ouvertes, en attente de recherches. Si tu as une source, signale-la.</p></div>
+ <div class="dvcards">${AVERIF.map(c=>`<article class="dvcard avcard"><div class="dv-top"><span class="st cours">À vérifier</span></div>
+  <h3>${NAME[c.cand]} <span class="fam">${esc(c.parti)}</span> · ${esc(c.sujet)}</h3>
+  <div class="dv-grid"><div class="dv-side"><div class="dv-lab">Ce qui est établi</div><p>${esc(c.etabli)}</p><div class="src">${c.src.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${esc(t)}</a>`).join(" · ")}</div></div>
+  <div class="dv-side"><div class="dv-lab">Ce qui manque</div><p>${esc(c.manque)}</p></div></div>
+  <p class="src"><a href="https://github.com/Tanguyrhd/boussole-2027/issues/new?title=${encodeURIComponent("À vérifier : "+NAME[c.cand]+" — "+c.sujet)}" target="_blank" rel="noopener">J'ai une source / signaler une erreur</a></p></article>`).join("")}</div>`;
 }
 
 /* ---------- Face à face ---------- */
