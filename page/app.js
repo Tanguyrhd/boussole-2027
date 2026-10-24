@@ -231,25 +231,48 @@ function renderEP(){
 }
 
 /* ---------- Face à face ---------- */
-let DU={a:"le_pen",b:"melenchon"};
+let DU={a:"le_pen",b:"melenchon",f:"all",open:null};
+/* catégorie d'une question selon l'écart entre les deux positions (échelle −2..+2) */
+/* opposés = l'un pour, l'autre contre ; d'accord = du même côté (ou neutres tous les deux) ; nuancé = l'un des deux neutre */
+const DCAT=(pa,pb)=>{const x=Math.sign(pa),y=Math.sign(pb);return x*y<0?"opp":x===y?"acc":"ecart"};
+const DCL={opp:"Opposés",ecart:"Nuancés",acc:"D'accord"};
+function dscale(q,a,b){/* mini-échelle : deux points sur 5 crans, reliés par un trait */
+ const x=v=>(v+2)*25, pa=q.pos[a], pb=q.pos[b], lo=Math.min(pa,pb), hi=Math.max(pa,pb);
+ return `<div class="dsc" role="img" aria-label="${NAME[a]} ${LAB[pa+2]}, ${NAME[b]} ${LAB[pb+2]}"><div class="dsc-line"></div>${[0,1,2,3,4].map(i=>`<span class="dsc-tick" style="left:${i*25}%"></span>`).join("")}
+ ${hi>lo?`<span class="dsc-gap" style="left:${x(lo)}%;width:${x(hi)-x(lo)}%"></span>`:""}
+ <span class="dsc-dot da${pa===pb?" same":""}" style="left:${x(pa)}%"></span><span class="dsc-dot db${pa===pb?" same":""}" style="left:${x(pb)}%"></span>
+ <span class="dsc-l">contre</span><span class="dsc-r">pour</span></div>`}
 function renderDuel(){
  const {a,b}=DU, both=Q.filter(q=>q.pos[a]!=null&&q.pos[b]!=null);
  const gap=q=>Math.abs(q.pos[a]-q.pos[b]);
  const score=l=>l.length?l.reduce((s,q)=>s+(4-gap(q)),0)/(l.length*4):null;
  const glob=score(both);
- const byTh=THEMES.map(t=>{const l=both.filter(q=>q.theme===t.id);return [t,score(l),l.length]}).filter(x=>x[2]);
- const opp=both.filter(q=>gap(q)>=3).sort((x,y)=>gap(y)-gap(x)||x.n-y.n), same=both.filter(q=>gap(q)===0&&q.pos[a]!==0);
- const qline=q=>`<div class="vrow"><div><b>Q${q.n}</b> ${esc(q.text)} <span class="fam">${THNAME[q.theme]}</span></div><div class="eppos"><span>${NAME[a]} <span class="posb ${POSCLS[q.pos[a]]}">${LAB[q.pos[a]+2]}</span></span><span>${NAME[b]} <span class="posb ${POSCLS[q.pos[b]]}">${LAB[q.pos[b]+2]}</span></span></div></div>`;
+ const cat=q=>DCAT(q.pos[a],q.pos[b]);
+ const cnt=l=>({opp:l.filter(q=>cat(q)==="opp").length,ecart:l.filter(q=>cat(q)==="ecart").length,acc:l.filter(q=>cat(q)==="acc").length});
+ const stack=(c,n)=>`<span class="dstack">${["opp","ecart","acc"].map(k=>c[k]?`<span class="ds-${k}" style="flex:${c[k]}" title="${DCL[k]} : ${c[k]}"></span>`:"").join("")}</span>`;
+ const G=cnt(both);
+ const legend=`<div class="legend dleg"><span><span class="dsw ds-opp"></span> ${DCL.opp} (${G.opp})</span><span><span class="dsw ds-ecart"></span> ${DCL.ecart} (${G.ecart})</span><span><span class="dsw ds-acc"></span> ${DCL.acc} (${G.acc})</span></div>`;
+ const keep=q=>DU.f==="all"||(DU.f==="opp"?cat(q)==="opp":cat(q)==="acc");
+ const qrow=q=>`<div class="dq dq-${cat(q)}"><div class="dq-t"><span class="mono">Q${q.n}</span> ${esc(q.text)}</div>${dscale(q,a,b)}</div>`;
+ const themes=THEMES.map(t=>{const l=both.filter(q=>q.theme===t.id);return [t,l]}).filter(x=>x[1].length).map(([t,l])=>[t,l,score(l),cnt(l)]);
+ const cards=themes.map(([t,l,s,c])=>{const vis=l.filter(keep);if(!vis.length)return "";
+  const groups=["opp","ecart","acc"].map(k=>{const g=vis.filter(q=>cat(q)===k).sort((x,y)=>gap(y)-gap(x)||x.n-y.n);return g.length?`<div class="dgrp"><div class="dgh dgh-${k}">${DCL[k]} · ${g.length}</div>${g.map(qrow).join("")}</div>`:""}).join("");
+  return `<details class="dcard"${DU.open===t.id?" open":""} data-dth="${t.id}"><summary><span class="dname">${t.name}</span>${stack(c)}<span class="v" title="proximité">${Math.round(s*100)} %</span><span class="dcount mono">${c.opp?`<b class="t-opp">${c.opp} opposé${c.opp>1?"s":""}</b>`:"0 opposé"} · <b class="t-acc">${c.acc} d'accord</b> · sur ${l.length}</span></summary>${groups}</details>`}).join("");
  const parl=["an","ep"].map(ch=>{if(!PARTY[a][ch]||!PARTY[b][ch])return `<p class="src">${ch==="an"?"Assemblée":"Parlement européen"} : ${[a,b].filter(x=>!PARTY[x][ch]).map(x=>NAME[x]).join(" et ")} sans groupe, pas de comparaison.</p>`;const [r,n]=pAgree(a,b,ch,"all");return r==null?"":`<p><b>${Math.round(r*100)} %</b> de votes identiques ${ch==="an"?"à l'Assemblée":"au Parlement européen"} entre ${PARTY[a][ch]} et ${PARTY[b][ch]} <span class="src">(${n.toLocaleString("fr-FR")} votes)</span> <button class="btn ghost" data-duch="${ch}">Voir leurs désaccords</button></p>`}).join("");
  const ep=`<div class="card"><h3>Ce que leurs partis votent</h3>${parl}<p class="src">Votes réels des groupes, pas des déclarations.</p></div>`;
  const opts=C.map(c=>[c[0],c[1]]);
  document.getElementById("v-duel").innerHTML=`<div class="block"><h2>Face à face</h2><p class="lede">Deux candidats, leurs positions comparées question par question : où ils s'opposent, où ils se rejoignent.</p>
  <div class="filters">${sel("du-a","Candidat A",opts,a)}${sel("du-b","Candidat B",opts,b)}<button class="btn ghost" id="du-swap">Inverser</button></div></div>
  ${a===b?'<p class="note">Choisis deux candidats différents.</p>':`
- <div class="card"><p class="agree"><b>${glob==null?"—":Math.round(glob*100)+" %"}</b> de proximité sur ${both.length} questions où les deux ont une position.</p><p class="src">Même calcul que le score d'affinité : 100 % = mêmes positions partout, 0 % = toujours aux deux extrêmes.</p></div>
- <div class="block"><h3>Par thème</h3><div class="bars">${byTh.map(([t,s,n])=>`<div class="bar"><span class="mono">${t.name}</span><div class="track"><div class="fill" style="width:${Math.round(s*100)}%"></div></div><span class="v">${Math.round(s*100)} %</span></div>`).join("")}</div><p class="src">Le nombre de questions varie beaucoup selon le thème (2 pour l'agriculture, 13 pour l'énergie) : un thème à 2 questions se lit avec prudence.</p></div>
- <div class="block"><h3>Où ils s'opposent (${opp.length})</h3><p class="src">Au moins trois crans d'écart, par exemple ++ contre −.</p>${opp.map(qline).join("")||'<p class="src">Aucune opposition franche.</p>'}</div>
- <div class="block"><h3>Où ils sont d'accord (${same.length})</h3><p class="src">Exactement la même position, hors « neutre ».</p>${same.map(qline).join("")||'<p class="src">Aucune question avec exactement la même position.</p>'}</div>
+ <div class="card dhead"><div class="dwho"><span><span class="dsc-dot da inl"></span> ${NAME[a]}</span><span><span class="dsc-dot db inl"></span> ${NAME[b]}</span></div>
+ <p class="agree"><b>${glob==null?"—":Math.round(glob*100)+" %"}</b> de proximité sur ${both.length} questions</p>
+ ${stack(G)}${legend}
+ <p class="src">Proximité : 100 % = mêmes positions partout, 0 % = toujours aux deux extrêmes (même calcul que le score d'affinité). La barre compte les questions où ils sont opposés, nuancés ou d'accord.</p></div>
+ <div class="block"><h3>Thème par thème</h3>
+ <div class="filters"><div class="fctl"><span class="mono">Afficher</span><div class="seg" role="group">${[["all","Tout"],["opp","Désaccords"],["acc","Accords"]].map(([v,t])=>`<button data-duf="${v}" aria-pressed="${DU.f===v}">${t}</button>`).join("")}</div></div></div>
+ <p class="src">Ouvre un thème pour voir ses questions. Sur chaque échelle, de « contre » à « pour » la phrase : <span class="dsc-dot da inl"></span> ${NAME[a]}, <span class="dsc-dot db inl"></span> ${NAME[b]}. Le pourcentage à droite de chaque thème est leur proximité. <b>Opposés</b> : l'un est pour, l'autre contre. <b>Nuancés</b> : l'un des deux est partagé. <b>D'accord</b> : du même côté, même avec une intensité différente.</p>
+ <div class="dcards">${cards||'<p class="note">Aucune question ne correspond.</p>'}</div>
+ <p class="src">Un thème avec peu de questions (2 pour l'agriculture) se lit avec prudence.</p></div>
  ${ep}`}`;
 }
 
@@ -421,6 +444,7 @@ document.addEventListener("click",e=>{
  if(e.target.id==="rst"){S={a:{},w:{}};save();renderAff();return}
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape")pop.hidden=true});
+document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("dcard")){if(d.open){DU.open=d.dataset.dth;document.querySelectorAll(".dcard[open]").forEach(o=>{if(o!==d)o.open=false})}else if(DU.open===d.dataset.dth)DU.open=null}},true);
 document.addEventListener("input",e=>{if(e.target.dataset.w){const v=+e.target.value;S.w[e.target.dataset.w]=v;save();document.getElementById("wl").textContent=["Aucune","Faible","Moyenne","Forte"][v]}});
 document.addEventListener("change",e=>{const id=e.target.id,v=e.target.value;
  if(id.startsWith("vf-")){VF[id.slice(3)]=v;renderVotes()}
@@ -443,7 +467,8 @@ document.addEventListener("click",e=>{
  const pf=e.target.closest("[data-pfocus]");if(pf){PV.focus=pf.dataset.pfocus;renderEP();return}
  const pc=e.target.closest("[data-pcmp]");if(pc){PV={...PV,a:PV.focus,b:pc.dataset.pcmp,mode:"desaccord",n:20};renderEP();document.getElementById("p-cmp").scrollIntoView({behavior:"smooth"});return}
  const dch=e.target.closest("[data-duch]");if(dch){PV={...PV,ch:dch.dataset.duch,theme:"all",a:DU.a,b:DU.b,mode:"desaccord",n:20,q:""};renderEP();show("votes");document.getElementById("p-cmp").scrollIntoView();return}
- if(e.target.id==="du-swap"){DU={a:DU.b,b:DU.a};renderDuel();return}
+ if(e.target.id==="du-swap"){DU={...DU,a:DU.b,b:DU.a};renderDuel();return}
+ const duf=e.target.closest("[data-duf]");if(duf){DU.f=duf.dataset.duf;renderDuel();return}
 });
 
 Promise.all(["questions","affaires","factchecks","meta","europarl","an"].map(n=>fetch(`data/${n}.json`).then(r=>{if(!r.ok)throw new Error(n);return r.json()})))
