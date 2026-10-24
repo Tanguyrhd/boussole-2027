@@ -277,6 +277,18 @@ table.mx td.mx-self{background:var(--mid);color:var(--muted)}
 @media (min-width:720px){.pdcard>summary{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n c"}}
 .pvrow{display:grid;gap:4px;padding:8px 0;border-bottom:1px solid var(--line)}.pvt{font-size:.9rem}
 .card h4{margin:14px 0 4px}
+.dvcards{display:grid;gap:14px}
+.dvcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.dv-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dvcard h3{font-size:1.1rem;margin:8px 0 10px}
+.dv-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+@media (min-width:720px){.dv-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.dv-side{border-left:3px solid var(--accent);padding:4px 0 4px 12px}
+.dv-side+.dv-side{border-left-color:#d9631e}
+.dv-lab{font-family:var(--f-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.dv-date{font-size:.75rem;color:var(--muted)}.dv-qui{font-weight:600;font-size:.92rem;margin-top:2px}
+.dv-side p{margin:.4em 0}
+.dv-nuance{font-size:.92rem;background:var(--mid);border-radius:6px;padding:8px 10px;margin:10px 0 4px}
 </style>
 </head>
 <body>
@@ -517,7 +529,7 @@ function renderEP(){
  const subnav=`<div class="subnav" role="tablist">${[["prox","Proximité entre partis"],["dit","Dit / a voté"]].map(([v,t])=>`<button role="tab" data-psub="${v}" aria-selected="${sub===v}">${t}</button>`).join("")}</div>`;
  const head=`<div class="block"><h2>Votes</h2><p class="lede">Comment chaque parti vote réellement : pas des déclarations, des votes inscrits au procès-verbal. Pour comparer deux candidats et leurs partis vote par vote, va dans <button class="linkbtn" data-goduel="1">Face à face</button>.</p></div>${subnav}`;
  if(sub==="dit"){
-  box.innerHTML=head+`<div class="card" id="dit-vote"><h3>Dit / a voté</h3><p>Des cas vérifiés un par un, où l'on met côte à côte ce qu'un candidat ou son parti affirme et ce que lui ou son groupe a voté sur le même sujet, avec un verdict : incohérence, évolution, ou cohérent après examen.</p><p class="src">Rubrique en préparation : chaque cas est vérifié sur le procès-verbal officiel et sur la déclaration d'origine avant d'être publié.</p></div>`;
+  box.innerHTML=head+`<div id="dit-vote">${ditVoteHTML()}</div>`;
   return}
  const themes=ch==="an"?Object.keys(AN.pairs).filter(t=>t!=="all"&&AN.n[t]>=40):[...new Set(EP.flatMap(v=>v.themes))];
  const nTot=ch==="an"?(AN.n[PV.theme]||0):pVotes().length;
@@ -545,6 +557,48 @@ function partyDiff(a,b,ch){
  const cards=ths.map(t=>{const l=vs.filter(v=>(v.themes[0]||"autre")===t);if(!l.length)return "";const shown=l.slice(0,10);
   return `<details class="dcard pdcard"><summary><span class="dname">${t==="autre"?"Autres sujets":THNAME[t]}</span><span class="dcount mono"><b class="t-opp">${l.length} vote${l.length>1?"s":""} où ils divergent</b></span></summary><div class="dgrp">${shown.map(row).join("")}${l.length>10?`<p class="src">… et ${l.length-10} autres.</p>`:""}</div></details>`}).join("");
  return {n:vs.length,cards}}
+
+/* ---------- Dit / a voté : cas vérifiés un par un (24/10/2026) ----------
+   Repérés par comparaison automatique des positions MonVote2027 et des votes, puis vérifiés à la main :
+   vote contrôlé sur le registre officiel (Assemblée) ou HowTheyVote (Parlement européen), déclaration retrouvée à sa source. */
+const DITVOTE=[
+ {cand:"le_pen",parti:"RN",sujet:"RSA conditionné à des heures d'activité",verdict:"inc",niveau:"Déclaration du président du parti, votes de la candidate et de son groupe",
+  dit:{date:"4 février 2024",qui:"Jordan Bardella, président du RN",txt:"Se dit « parfaitement d'accord » avec le RSA conditionné à 15 heures d'activité : « il faut des contreparties aux prestations sociales de ce type ».",src:[["France 3, Dimanche en politique (annonce de l'émission)","https://www.francetvpro.fr/contenu-de-presse/65104333"],["Fondation Jean-Jaurès, citant Libération du 5/02/2024","https://www.jean-jaures.org/publication/les-contradictions-du-programme-social-du-rassemblement-national/"]]},
+  vote:{date:"10 octobre et 14 novembre 2023",qui:"Marine Le Pen et le groupe RN, Assemblée nationale",txt:"Contre la loi pour le plein emploi, qui instaure les 15 heures d'activité pour les allocataires du RSA : 88 députés RN contre en première lecture (dont Marine Le Pen), 49 contre sur le texte final.",src:[["Scrutin du 10/10/2023","https://www.assemblee-nationale.fr/dyn/16/scrutins/2717"],["Scrutin du 14/11/2023","https://www.assemblee-nationale.fr/dyn/16/scrutins/2965"]]},
+  nuance:"La déclaration est postérieure aux votes : contradiction entre le président du parti et ses députés, ou changement de ligne."},
+ {cand:"le_pen",parti:"RN",sujet:"Régulation des réseaux sociaux (DSA)",verdict:"evo",niveau:"Votes et déclarations de Jordan Bardella, eurodéputé et président du RN",
+  vote:{date:"20 janvier puis 5 juillet 2022",qui:"Jordan Bardella, Parlement européen",txt:"Vote pour le règlement européen sur les services numériques (DSA) en première lecture, puis s'abstient lors de son adoption finale.",src:[["Vote du 20/01/2022","https://howtheyvote.eu/votes/139040"],["Vote du 05/07/2022","https://howtheyvote.eu/votes/146649"]]},
+  dit:{date:"janvier 2025 et 2026",qui:"Patriotes pour l'Europe (groupe présidé par Bardella), puis Jordan Bardella",txt:"Le groupe lance une pétition accusant le DSA de censurer certaines opinions ; Bardella dénonce en 2026 une « mise au pas des réseaux sociaux » par les macronistes.",src:[["IREDIC, janvier 2025","https://iredic.fr/2025/01/27/manipulation-ou-regulation-entre-polemique-et-realite-dans-les-accusations-de-jordan-bardella-contre-lunion-europeenne/"],["Le JDD, 2026","https://www.lejdd.fr/politique/mise-au-pas-des-reseaux-sociaux-pour-bardella-les-macronistes-sont-prets-a-pietiner-la-democratie-167184"]]},
+  nuance:"Pour, puis abstention, puis opposition déclarée : un changement de position progressif, pas une contradiction au même moment."},
+ {cand:"melenchon",parti:"LFI",sujet:"Soutien militaire à l'Ukraine",verdict:"inc",niveau:"Déclarations du parti, vote de ses eurodéputés",
+  dit:{date:"mars 2024 et mars 2025",qui:"La France insoumise, Jean-Luc Mélenchon",txt:"LFI s'oppose à « toute escalade militaire » et prône la négociation. Mélenchon : la France doit « choisir le camp de la paix, et non celui des tensions et des escalades militaires ».",src:[["L'insoumission, 12/03/2024","https://linsoumission.fr/2024/03/12/guerre-ukraine-lfi-paix/"],["Blog de Jean-Luc Mélenchon, 9/03/2025","https://melenchon.fr/2025/03/09/si-tu-veux-la-paix-organise-la/"]]},
+  vote:{date:"17 juillet 2024",qui:"Les 9 eurodéputés LFI, Parlement européen",txt:"Votent pour la résolution sur le soutien continu à l'Ukraine, qui appelle à lui « fournir un soutien militaire aussi longtemps et sous quelque forme que ce soit nécessaire » (495 pour, 137 contre).",src:[["Vote du 17/07/2024","https://howtheyvote.eu/votes/169362"]]},
+  nuance:"Mélenchon n'est pas eurodéputé : c'est le vote de son parti. La résolution contient aussi des volets financiers, humanitaires et des sanctions. Nous n'avons pas trouvé d'explication de vote de LFI."},
+ {cand:"retailleau",parti:"LR",sujet:"Taxe carbone sur les carburants",verdict:"inc",niveau:"Déclaration du candidat, vote des eurodéputés de son parti",
+  dit:{date:"4 décembre 2018",qui:"Bruno Retailleau, président du groupe LR au Sénat",txt:"Juge le moratoire sur la hausse de la taxe carbone « absolument insuffisant » et demande une annulation : « J'espère que ce moratoire est en réalité une annulation qui ne veut pas dire son nom. »",src:[["Public Sénat, 4/12/2018","https://www.publicsenat.fr/article/politique/moratoire-sur-la-hausse-des-taxes-sur-le-carburant-c-est-insuffisant-selon-bruno"]]},
+  vote:{date:"18 avril 2023",qui:"Eurodéputés LR (7 sur 8, le 8e n'a pas voté), Parlement européen",txt:"Votent la réforme du marché carbone européen, qui crée un prix du carbone sur les carburants et le chauffage à partir de 2027 (« ETS2 ») : environ 11 à 13 centimes de plus par litre selon les estimations.",src:[["Vote du 18/04/2023","https://howtheyvote.eu/votes/154173"],["Institut Delors, l'ETS2 en infographie","https://institutdelors.eu/content/uploads/2025/10/Infographie_ETS2_gilet_jaune_transition_verte_Nguyen_FR.pdf"]]},
+  nuance:"La déclaration date de 2018. La réforme s'accompagne d'un Fonds social pour le climat destiné aux ménages modestes."},
+ {cand:"ruffin",parti:"Debout",sujet:"Nouveaux réacteurs nucléaires",verdict:"evo",niveau:"Votes et déclarations du candidat",
+  vote:{date:"21 mars et 16 mai 2023",qui:"François Ruffin, député (alors LFI)",txt:"Vote contre la loi d'accélération de la construction de nouveaux réacteurs nucléaires, en première lecture puis sur le texte définitif.",src:[["Scrutin du 21/03/2023","https://www.assemblee-nationale.fr/dyn/16/scrutins/1243"],["Scrutin du 16/05/2023","https://www.assemblee-nationale.fr/dyn/16/scrutins/1533"]]},
+  dit:{date:"2023, puis programme 2027",qui:"François Ruffin",txt:"En 2023 : « Je ne suis pas favorable à une relance nucléaire. » Programme 2027 : « Nous poursuivrons aussi la construction des six réacteurs EPR2. »",src:[["Interview, 2023","https://actu.orange.fr/videos/politique/francois-ruffin-je-ne-suis-pas-favorable-a-une-relance-nucleaire-CNT000001JENgT.html"],["Programme 2027","https://nouspresident.fr/travaillisme-ecologique/"]]},
+  nuance:"Ses votes de 2023 étaient cohérents avec ses déclarations de l'époque : c'est un changement de position, assumé dans son programme."}
+];
+const DVLAB={inc:["Incohérence","def"],evo:["A changé de position","nondef"]};
+function ditVoteHTML(){
+ const side=(lab,x)=>`<div class="dv-side"><div class="dv-lab">${lab}</div><div class="mono dv-date">${esc(x.date)}</div><div class="dv-qui">${esc(x.qui)}</div><p>${esc(x.txt)}</p><div class="src">${x.src.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${esc(t)}</a>`).join(" · ")}</div></div>`;
+ const issue=c=>`https://github.com/Tanguyrhd/boussole-2027/issues/new?title=${encodeURIComponent("Dit / a voté : "+NAME[c.cand]+" — "+c.sujet)}`;
+ const cards=DITVOTE.map(c=>{const first=c.sujet==="Nouveaux réacteurs nucléaires"||c.sujet.startsWith("Régulation")?[["A voté",c.vote],["Puis a dit",c.dit]]:[["A dit",c.dit],["A voté",c.vote]];
+  return `<article class="dvcard"><div class="dv-top"><span class="st ${DVLAB[c.verdict][1]}">${DVLAB[c.verdict][0]}</span><span class="fam">${esc(c.niveau)}</span></div>
+  <h3>${NAME[c.cand]} <span class="fam">${esc(c.parti)}</span> · ${esc(c.sujet)}</h3>
+  <div class="dv-grid">${first.map(([l,x])=>side(l,x)).join("")}</div>
+  <p class="dv-nuance"><b>À savoir :</b> ${esc(c.nuance)}</p>
+  <p class="src"><a href="${issue(c)}" target="_blank" rel="noopener">Signaler une erreur sur ce cas</a></p></article>`}).join("");
+ const cnt=C.map(c=>[c[1],DITVOTE.filter(d=>d.cand===c[0]).length]);
+ return `<div class="block"><h3>Dit / a voté</h3><p>Ce qu'un candidat ou son parti affirme, à côté de ce que lui ou son groupe a réellement voté sur le même sujet.</p>
+ <p class="src">Comment ces cas ont été choisis : une comparaison automatique des 100 positions MonVote2027 avec les votes à l'Assemblée et au Parlement européen a produit 74 alertes. Chacune a été relue à la main : la plupart tombent à l'examen (vote tactique, texte plus large que la question, vote contre un texte jugé trop faible, désaccord sur le moyen). Restent ${DITVOTE.length} cas, retenus seulement si le vote est confirmé sur le registre officiel et la déclaration retrouvée à sa source.</p></div>
+ <div class="note">Aucun cas pour un candidat ne veut pas dire qu'il est cohérent. Les votes sur l'économie et le budget, qui passent surtout par des amendements, ne sont pas encore examinés, et plusieurs candidats n'ont jamais siégé au Parlement. Cas par candidat à ce jour : ${cnt.map(([n,k])=>`${n} ${k}`).join(" · ")}.</div>
+ <div class="dvcards">${cards}</div>`;
+}
 
 /* ---------- Face à face ---------- */
 let DU={a:"le_pen",b:"melenchon",f:"all",open:null};
