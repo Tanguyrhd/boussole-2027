@@ -51,6 +51,8 @@ for leg in ("16", "17"):
             nb = {1: int(d["pour"]), -1: int(d["contre"]), 0: int(d["abstentions"])}
             tot = sum(nb.values())
             if tot == 0: continue  # groupe qui n'a pas pris part au vote
+            # Trop peu de votants pour parler au nom du groupe (moins de 10 % de ses membres, ou un seul député)
+            if tot < max(2, 0.1 * int(x.get("nombreMembresGroupe") or 0)): continue
             # On recalcule la position majoritaire depuis le décompte : le champ officiel « positionMajoritaire »
             # est parfois incohérent (ex. scrutin 17/217 : RN 118 pour, 0 contre, noté « abstention »).
             top = max(nb.values()); best = [k for k, x in nb.items() if x == top]

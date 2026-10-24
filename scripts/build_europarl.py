@@ -68,9 +68,13 @@ for vid, v in votes.items():
     d = {}
     for cand, cnt in deleg[vid].items():
         voted = {k: n for k, n in cnt.items() if k in POS}
-        if not voted: continue
-        top, n = max(voted.items(), key=lambda kv: kv[1])
-        d[cand] = [POS[top], round(n / sum(voted.values()), 2)]  # [position majoritaire, cohésion]
+        nv, members = sum(voted.values()), sum(cnt.values())
+        # Pas de position de délégation si moins de la moitié de ses eurodéputés a voté
+        # (ex. IVG dans la Charte, avr. 2024 : 1 LR sur 8 a voté ; « LR pour » aurait été trompeur), ni en cas d'égalité.
+        if not nv or nv < members / 2: continue
+        top = max(voted.values()); best = [k for k, n in voted.items() if n == top]
+        if len(best) > 1: continue
+        d[cand] = [POS[best[0]], round(top / nv, 2)]  # [position majoritaire, cohésion]
     out.append({"id": int(vid), "date": v["timestamp"][:10], "titre": v["display_title"] or v["procedure_title"],
                 "proc": v["procedure_reference"], "res": v["result"], "pour": int(v["count_for"] or 0),
                 "contre": int(v["count_against"] or 0), "abst": int(v["count_abstention"] or 0),
