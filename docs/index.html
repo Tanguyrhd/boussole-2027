@@ -268,6 +268,15 @@ table.mx td.mx-self{background:var(--mid);color:var(--muted)}
 .dsc-dot.same.da{margin-left:-11px}.dsc-dot.same.db{margin-left:-3px}
 .dsc-dot.inl{position:static;display:inline-block;margin:0 2px 0 0;vertical-align:-2px;width:12px;height:12px}
 .dsc-l,.dsc-r{position:absolute;top:18px;font-family:var(--f-mono);font-size:.62rem;color:var(--muted)}.dsc-l{left:-6px}.dsc-r{right:-6px}
+.vmark{display:inline-block;margin-left:5px;font-family:var(--f-mono);font-size:.6rem;font-weight:600;letter-spacing:.03em;padding:0 4px;border-radius:3px;background:var(--accent);color:var(--bg);vertical-align:1px}
+.subnav{display:flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:6px 0 14px;position:sticky;top:0;z-index:5;background:var(--surface)}
+.subnav button{flex:1;font-family:var(--f-display);font-stretch:90%;font-weight:600;font-size:.95rem;border:0;background:var(--surface);color:var(--muted);padding:10px 8px;cursor:pointer}
+.subnav button+button{border-left:1px solid var(--line)}
+.subnav button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.pdcard>summary{grid-template-columns:minmax(0,1fr);grid-template-areas:"n" "c"}
+@media (min-width:720px){.pdcard>summary{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n c"}}
+.pvrow{display:grid;gap:4px;padding:8px 0;border-bottom:1px solid var(--line)}.pvt{font-size:.9rem}
+.card h4{margin:14px 0 4px}
 </style>
 </head>
 <body>
@@ -295,7 +304,7 @@ table.mx td.mx-self{background:var(--mid);color:var(--muted)}
 <section class="view" id="v-themes"><p class="loading">Chargement des données…</p></section>
 <section class="view" id="v-affinite" hidden></section>
 <section class="view" id="v-duel" hidden></section>
-<section class="view" id="v-votes" hidden><div class="stackv" id="votes-ep"></div><div class="stackv" id="votes-an"></div></section>
+<section class="view" id="v-votes" hidden><div class="stackv" id="votes-ep"></div></section>
 <section class="view" id="v-justice" hidden></section>
 <section class="view" id="v-factchecks" hidden></section>
 <section class="view" id="v-controverses" hidden></section>
@@ -440,7 +449,7 @@ function srcHTML(q,c){
 }
 function qHTML(q){
  const mine=S.a[q.qid];
- const cols=[-2,-1,0,1,2].map(v=>`<div class="col c${v}"><div class="lab">${LAB[v+2]}</div>${C.filter(c=>q.pos[c[0]]===v).map(c=>{const voted=(q.src[c[0]]||[]).some(s=>s.type.startsWith("Vote"));return `<button class="cand${voted?" voted":""}" data-src="${q.qid}|${c[0]}" aria-pressed="${openSrc===q.qid+"|"+c[0]}" title="${voted?"Position appuyée sur un vote":"Voir les sources"}">${c[1]}</button>`}).join("")}</div>`).join("");
+ const cols=[-2,-1,0,1,2].map(v=>`<div class="col c${v}"><div class="lab">${LAB[v+2]}</div>${C.filter(c=>q.pos[c[0]]===v).map(c=>{const voted=(q.src[c[0]]||[]).some(s=>s.type.startsWith("Vote"));return `<button class="cand${voted?" voted":""}" data-src="${q.qid}|${c[0]}" aria-pressed="${openSrc===q.qid+"|"+c[0]}" title="${voted?"Position appuyée sur un vote":"Voir les sources"}">${c[1]}${voted?'<span class="vmark">vote</span>':""}</button>`}).join("")}</div>`).join("");
  const missing=C.filter(c=>q.pos[c[0]]==null).map(c=>c[1]);
  const os=openSrc&&openSrc.startsWith(q.qid+"|")?srcHTML(q,openSrc.split("|")[1]):"";
  return `<div class="q"><h4><span class="mono">Q${q.n}</span> ${esc(q.text)}</h4>${q.context?`<p class="ctx">${esc(q.context)}</p>`:""}<div class="scale">${cols}</div>${missing.length?`<p class="src">Sans position : ${missing.join(", ")}</p>`:""}${os}
@@ -454,7 +463,7 @@ function renderThemes(){
  <div class="weight"><label for="w-${th.id}" class="mono">Importance pour moi</label><input id="w-${th.id}" type="range" min="0" max="3" step="1" value="${w}" data-w="${th.id}"><span class="mono" id="wl">${["Aucune","Faible","Moyenne","Forte"][w]}</span></div></div>
  <div class="block"><h3>Ce qu'il faut regarder sur ce thème</h3><div class="lookfor">${th.look.map(l=>`<div><b>${l[0]}</b><span>${l[1]}</span></div>`).join("")}</div></div>
  <div class="block"><h3>${qs.length} question${qs.length>1?"s":""} qui séparent les candidats</h3>
- <div class="legend"><span>Positions MonVote2027, de −− (tout à fait contre) à ++ (tout à fait pour). Clique sur un nom pour voir ses sources. Nom souligné en bleu : position appuyée sur un vote au Parlement.</span></div>
+ <div class="legend"><span>Positions MonVote2027, de −− (tout à fait contre) à ++ (tout à fait pour). Clique sur un nom pour voir ses sources. Marque <span class="vmark">vote</span> : la position s'appuie sur un vote au Parlement (clique pour voir lequel).</span></div>
  ${qs.map(qHTML).join("")}</div>`;
  if(th.gap)h+=`<p class="note">${th.gap}</p>`;
  if(th.ms.length)h+=`<div class="block"><h3>Mesures phares sourcées</h3><div class="measures">${th.ms.map(m=>`<div class="m"><div class="who">${NAME[m[0]]}</div><div class="what">${m[1]}${m[4]==="old"?'<span class="tag old">source 2022-2024</span>':""}<div class="src"><a href="${m[3]}" target="_blank" rel="noopener">${m[2]}</a></div></div></div>`).join("")}</div>
@@ -482,40 +491,6 @@ const posKey=p=>p==null?"na":p>0?"pour":p<0?"contre":"neutre";
 const meKey=(q,c)=>{const u=S.a[q.qid],p=q.pos[c];if(u===undefined||p==null)return "na";const d=Math.abs(u-p);return d<=1?"accord":d>=3?"desaccord":"entre"};
 function sel(id,label,opts,cur){return `<div class="fctl"><label for="${id}" class="mono">${label}</label><select id="${id}">${opts.map(([v,t])=>`<option value="${v}"${cur===v?" selected":""}>${t}</option>`).join("")}</select></div>`}
 function seg(name,opts,cur){return `<div class="fctl"><span class="mono">Affichage</span><div class="seg" role="group">${opts.map(([v,t])=>`<button data-seg="${name}" data-val="${v}" aria-pressed="${cur===v}">${t}</button>`).join("")}</div></div>`}
-let VF={cand:"all",pos:"all",theme:"all",view:"liste"};
-function voteRows(){const rows=[];Q.forEach(q=>C.forEach(c=>(q.src[c[0]]||[]).forEach(s=>{if(s.type.startsWith("Vote"))rows.push({q,c:c[0],s})})));return rows}
-function vposOK(r){const v=VF.pos;if(v==="all")return true;if(v==="accord"||v==="desaccord")return meKey(r.q,r.c)===v;return posKey(r.q.pos[r.c])===v}
-function vsrc(r){return `<div class="src"><span class="badge-type vote">${esc(r.s.type)}</span>${esc(r.s.date)} · ${esc(r.s.titre)}${r.s.url?` · <a href="${esc(r.s.url)}" target="_blank" rel="noopener">source</a>`:""}</div>${r.s.citation?`<div class="src">${esc(r.s.citation)}</div>`:""}`}
-const POSPHRASE={"2":"est tout à fait pour","1":"est plutôt pour","0":"est partagé(e) sur","-1":"est plutôt contre","-2":"est tout à fait contre"};
-function renderVotes(){
- const all=voteRows(), answered=Object.keys(S.a).length>0;
- const f=all.filter(r=>(VF.cand==="all"||r.c===VF.cand)&&vposOK(r)&&(VF.theme==="all"||r.q.theme===VF.theme)).sort((a,b)=>a.q.n-b.q.n||C.findIndex(c=>c[0]===a.c)-C.findIndex(c=>c[0]===b.c));
- const uniq=l=>[...new Map(l.map(r=>[r.q.qid+"|"+r.c,r])).values()];
- const cnt=c=>uniq(all.filter(r=>r.c===c)).length;
- const themes=[...new Set(all.map(r=>r.q.theme))];
- const posOpts=[["all","Toutes"],["pour","Pour la phrase (+ / ++)"],["neutre","Partagé (0)"],["contre","Contre la phrase (− / −−)"]].concat(answered?[["accord","D'accord avec moi"],["desaccord","Pas d'accord avec moi"]]:[]);
- const proof=r=>`<div class="proof"><span class="mono">Preuve citée</span> <span class="badge-type vote">${esc(r.s.type)}</span>${esc(r.s.date)} · ${esc(r.s.titre)}${r.s.url?` · <a href="${esc(r.s.url)}" target="_blank" rel="noopener">voir le scrutin</a>`:""}${r.s.citation?`<div class="src">${esc(r.s.citation)}</div>`:""}</div>`;
- let list;
- if(VF.view==="liste") list=f.map(r=>`<div class="vrow"><div class="sentence"><b>${NAME[r.c]}</b> ${POSPHRASE[r.q.pos[r.c]]??"n'a pas de position sur"} <span class="posb ${POSCLS[r.q.pos[r.c]]}">${r.q.pos[r.c]==null?"?":LAB[r.q.pos[r.c]+2]}</span> « ${esc(r.q.text)} » <span class="fam">Q${r.q.n} · ${THNAME[r.q.theme]}</span></div>${proof(r)}</div>`).join("");
- else {const byQ=new Map();f.forEach(r=>{if(!byQ.has(r.q.qid))byQ.set(r.q.qid,[]);byQ.get(r.q.qid).push(r)});
-  list=[...byQ.values()].map(rs=>{const q=rs[0].q,voted=new Set(rs.map(r=>r.c));
-   const cols=[-2,-1,0,1,2].map(v=>`<div class="col c${v}"><div class="lab">${LAB[v+2]}</div>${C.filter(c=>q.pos[c[0]]===v).map(c=>`<span class="cand${voted.has(c[0])?" voted":" faded"}">${c[1]}</span>`).join("")}</div>`).join("");
-   return `<div class="q"><h4><span class="mono">Q${q.n}</span> ${esc(q.text)}</h4><div class="scale">${cols}</div><p class="src">En couleur : les candidats dont la position s'appuie sur un vote.</p><details><summary class="src">${rs.length>1?`Voir les ${rs.length} preuves`:"Voir la preuve"}</summary>${rs.map(r=>`<div class="vrow"><div><b>${NAME[r.c]}</b></div>${proof(r)}</div>`).join("")}</details></div>`}).join("")}
- document.getElementById("votes-an").innerHTML=`<div class="block"><h3>Preuves de vote citées par MonVote2027</h3>
- <p>Sur MonVote2027, chaque position d'un candidat repose sur des sources (programme, interview, article…). Ici, on ne garde que les ${uniq(all).length} positions dont <b>l'une des preuves est un vote</b> au Parlement, du candidat ou de son groupe. Chaque ligne se lit : « tel candidat est pour ou contre telle phrase, et voici le vote qui le montre ».</p>
- <p class="src">Le sens exact du vote (pour ou contre le texte) est décrit dans le résumé de MonVote2027 sous la preuve : un vote contre un texte peut justifier une position « pour » la phrase, selon la façon dont la question est tournée.</p></div>
- <div class="chips" role="group" aria-label="Positions prouvées par candidat">${C.map(c=>`<button class="chip" data-vcand="${c[0]}" aria-pressed="${VF.cand===c[0]}"${cnt(c[0])?"":" disabled"}>${c[1]} <span class="mono">${cnt(c[0])}</span></button>`).join("")}</div>
- <div class="filters">${sel("vf-pos","Position",posOpts,VF.pos)}${sel("vf-theme","Thème",[["all","Tous"],...THEMES.filter(t=>themes.includes(t.id)).map(t=>[t.id,t.name])],VF.theme)}${seg("vview",[["liste","Phrase par phrase"],["question","Par question"]],VF.view)}</div>
- ${!answered?'<p class="src">Réponds à des questions dans l\'onglet Thèmes pour pouvoir filtrer sur tes accords et désaccords.</p>':""}
- <p class="mono">${f.length} preuve${f.length>1?"s":""}${VF.cand==="all"?"":" · "+NAME[VF.cand]}</p>
- <div>${list||'<p class="note">Aucune preuve ne correspond à ces filtres.</p>'}</div>
- <p class="note">Glucksmann, Philippe, Tondelier et Zemmour ne siègent pas à l'Assemblée : peu ou pas de votes ici, ce qui ne veut pas dire incohérence. </p>
- <div class="card" id="dit-vote"><h3>Dit / a voté</h3><p>Ici viendront des cas vérifiés un par un, où l'on met côte à côte ce qu'un candidat promet et ce que lui ou son groupe a voté sur le même sujet, avec un verdict : cohérent ou incohérent.</p><p class="src">Rubrique en préparation.</p></div>
- <div class="card"><h3>Deux votes de groupe marquants</h3>
- <p><b>Loi immigration, 19 décembre 2023</b> : adoptée par 349 voix contre 186. RN et LR pour, gauche contre, majorité présidentielle divisée. Sans les 88 voix RN, le texte n'avait pas la majorité absolue. <a class="src" href="https://datan.fr/votes/legislature-16/vote_3213" target="_blank" rel="noopener">Datan</a></p>
- <p><b>${T("censure","Motion de censure")} sur les retraites, 20 mars 2023</b> : rejetée à 9 voix près (278 sur 287 nécessaires). Gauche, LIOT, RN et 19 LR sur 61 pour ; Renaissance, MoDem et Horizons ne l'ont pas votée. <a class="src" href="https://datan.fr/votes/legislature-16/vote_1240" target="_blank" rel="noopener">Datan</a></p></div>`;
-}
-
 /* ---------- Votes des partis : Assemblée nationale (open data AN) et Parlement européen (HowTheyVote.eu, ODbL) ---------- */
 let EP=[], AN={pairs:{},votes:[],n:{}};
 const PORD=["melenchon","roussel","tondelier","glucksmann","attal","philippe","retailleau","le_pen","zemmour"];
@@ -537,45 +512,39 @@ function pBadge(p){return p==null?'<span class="posb p0">absent</span>':`<span c
 const anUrl=v=>`https://www.assemblee-nationale.fr/dyn/${v.leg}/scrutins/${v.n}`;
 function renderEP(){
  const box=document.getElementById("votes-ep");if(!EP.length&&!AN.votes.length){box.innerHTML="";return}
- const ch=PV.ch, P=pAvail(ch); if(!P.includes(PV.focus))PV.focus=P[0]; if(!P.includes(PV.a))PV.a=P[0]; if(!P.includes(PV.b)||PV.b===PV.a)PV.b=P.find(c=>c!==PV.a);
+ const ch=PV.ch, P=pAvail(ch); if(!P.includes(PV.focus))PV.focus=P[0];
+ const sub=PV.sub||"prox";
+ const subnav=`<div class="subnav" role="tablist">${[["prox","Proximité entre partis"],["dit","Dit / a voté"]].map(([v,t])=>`<button role="tab" data-psub="${v}" aria-selected="${sub===v}">${t}</button>`).join("")}</div>`;
+ const head=`<div class="block"><h2>Votes</h2><p class="lede">Comment chaque parti vote réellement : pas des déclarations, des votes inscrits au procès-verbal. Pour comparer deux candidats et leurs partis vote par vote, va dans <button class="linkbtn" data-goduel="1">Face à face</button>.</p></div>${subnav}`;
+ if(sub==="dit"){
+  box.innerHTML=head+`<div class="card" id="dit-vote"><h3>Dit / a voté</h3><p>Des cas vérifiés un par un, où l'on met côte à côte ce qu'un candidat ou son parti affirme et ce que lui ou son groupe a voté sur le même sujet, avec un verdict : incohérence, évolution, ou cohérent après examen.</p><p class="src">Rubrique en préparation : chaque cas est vérifié sur le procès-verbal officiel et sur la déclaration d'origine avant d'être publié.</p></div>`;
+  return}
  const themes=ch==="an"?Object.keys(AN.pairs).filter(t=>t!=="all"&&AN.n[t]>=40):[...new Set(EP.flatMap(v=>v.themes))];
  const nTot=ch==="an"?(AN.n[PV.theme]||0):pVotes().length;
- /* 1. Avec qui vote ce parti */
  const others=P.filter(c=>c!==PV.focus).map(c=>[c,...pAgree(PV.focus,c)]).filter(x=>x[1]!=null).sort((x,y)=>y[1]-x[1]);
- const bars=`<div class="pbars">${others.map(([c,r,n])=>`<button class="pbar" data-pcmp="${c}" title="Voir leurs votes"><span class="pn">${pFull(c)}</span><span class="ptrack"><span class="pfill" style="width:${Math.round(r*100)}%"></span></span><span class="v">${Math.round(r*100)} %</span></button>`).join("")}</div>`;
- /* tableau complet */
+ const canDuel=c=>C.some(x=>x[0]===c);
+ const bars=`<div class="pbars">${others.map(([c,r,n])=>`<button class="pbar" data-pduel="${c}" title="Comparer dans Face à face"><span class="pn">${pFull(c)}</span><span class="ptrack"><span class="pfill" style="width:${Math.round(r*100)}%"></span></span><span class="v">${Math.round(r*100)} %</span></button>`).join("")}</div>`;
  const cell=(a,b)=>{if(a===b)return '<td class="mx-self">—</td>';const [r,n]=pAgree(a,b);return r==null?'<td>·</td>':`<td style="background:color-mix(in srgb,var(--pos) ${Math.round(Math.max(0,Math.min(1,(r-0.2)/0.75))*100)}%,var(--surface))${r>0.7?";color:var(--bg)":""}" title="${pName(a)} / ${pName(b)} : ${Math.round(r*100)} % sur ${n} votes">${Math.round(r*100)}</td>`};
  const matrix=`<div class="tbl"><table class="mx"><thead><tr><th></th>${P.map(d=>`<th>${pName(d)}</th>`).join("")}</tr></thead><tbody>${P.map(a=>`<tr><th>${pName(a)}</th>${P.map(b=>cell(a,b)).join("")}</tr>`).join("")}</tbody></table></div>`;
- /* 2. Comparer deux partis, vote par vote */
- const q=PV.q.trim().toLowerCase(), A=PV.a, B=PV.b;
- const list=pVotes().filter(v=>{const x=pPos(v,A),y=pPos(v,B);if(PV.mode==="desaccord"&&!(x!=null&&y!=null&&x!==y))return false;if(PV.mode==="accord"&&!(x!=null&&y!=null&&x===y))return false;return !q||(v.titre+" "+(v.dossier||"")).toLowerCase().includes(q)});
- const [ra,na]=pAgree(A,B);
- const TYP={texte:"Vote sur le texte",motion:"Motion"};
- const rows=list.slice(0,PV.n).map(v=>{const link=ch==="an"?anUrl(v):`https://howtheyvote.eu/votes/${v.id}`;
-  return `<div class="vrow"><div class="row"><span class="mono">${esc(v.date)}</span>${ch==="an"?`<span class="fam">${TYP[v.type]||""}</span>`:""} ${v.themes.filter(t=>t!=="autre").map(t=>`<span class="fam">${THEP(t)}</span>`).join(" ")} <span class="fam">${v.res==="adopté"||v.res==="ADOPTED"?"adopté":v.res?"rejeté":""}</span></div>
-  <div><b>${esc(ch==="an"?v.titre.replace(/^l'ensemble (du |de la |de l')/,"").replace(/^./,x=>x.toUpperCase()):v.titre)}</b></div>
-  <div class="eppos"><span>${pName(A)} ${pBadge(pPos(v,A))}</span><span>${pName(B)} ${pBadge(pPos(v,B))}</span></div>
-  <details><summary class="src">Tous les partis · ${v.pour} pour, ${v.contre} contre, ${v.abst} abst.</summary><div class="eppos small">${P.map(c=>{const co=pCoh(v,c);return `<span>${pName(c)} ${pBadge(pPos(v,c))}${co!=null&&co<0.75?` <span class="fam">divisés (${Math.round(co*100)} %)</span>`:""}</span>`}).join("")}</div></details>
-  <div class="src"><a href="${link}" target="_blank" rel="noopener">${ch==="an"?"Scrutin sur le site de l'Assemblée":"Détail sur HowTheyVote.eu"}</a></div></div>`}).join("");
- const chName=ch==="an"?"l'Assemblée nationale":"au Parlement européen";
  const missing=ch==="an"?"Reconquête n'a pas de groupe à l'Assemblée.":"Le PCF n'a pas d'eurodéputé.";
- box.innerHTML=`<div class="block"><h2>Votes</h2><p class="lede">Comment chaque parti vote réellement. Pas des déclarations : des votes inscrits au procès-verbal.</p>
- <div class="toc"><a href="#p-qui">Qui vote avec qui</a><a href="#p-cmp">Comparer deux partis</a><a href="#dit-vote">Dit / a voté</a><a href="#votes-an">Preuves citées par MonVote</a></div></div>
- <div class="pswitch"><div class="seg" role="group" aria-label="Assemblée">${[["an","Assemblée nationale"],["ep","Parlement européen"]].map(([v,t])=>`<button data-pch="${v}" aria-pressed="${ch===v}">${t}</button>`).join("")}</div>
+ box.innerHTML=head+`<div class="pswitch"><div class="seg" role="group" aria-label="Assemblée">${[["an","Assemblée nationale"],["ep","Parlement européen"]].map(([v,t])=>`<button data-pch="${v}" aria-pressed="${ch===v}">${t}</button>`).join("")}</div>
  ${sel("pv-theme","Thème",[["all","Tous les thèmes"],...THEMES.filter(t=>themes.includes(t.id)).map(t=>[t.id,t.name])],PV.theme)}</div>
- <p class="src">${ch==="an"?`Position majoritaire de chaque groupe sur ${nTot.toLocaleString("fr-FR")} scrutins publics, juillet 2022 à aujourd'hui (amendements compris). Source : open data de l'Assemblée nationale. Glucksmann : Place publique siège dans le groupe socialiste.`:`Position majoritaire des eurodéputés français de chaque parti sur ${nTot.toLocaleString("fr-FR")} votes finaux depuis 2019. Source : HowTheyVote.eu (licence ODbL).`} ${missing} Ruffin n'a pas de groupe à lui : il n'apparaît pas ici.</p>
  <div class="block" id="p-qui"><h3>Avec qui vote ce parti ?</h3>
  <div class="chips" role="group" aria-label="Choisir un parti">${P.map(c=>`<button class="chip" data-pfocus="${c}" aria-pressed="${PV.focus===c}">${pName(c)}</button>`).join("")}</div>
  <p class="agree">${pName(PV.focus)} vote comme…</p>${bars}
- <p class="src">Part des votes où les deux partis ont eu la même position (pour, contre ou abstention). Attention : deux oppositions votent souvent « contre » ensemble, pour des raisons opposées. Un fort accord ne veut pas dire mêmes idées. Clique sur une barre pour voir leurs votes.</p>
+ <p class="src">Part des votes où les deux partis ont eu la même position (pour, contre ou abstention). Deux oppositions votent souvent « contre » ensemble, pour des raisons opposées : un fort accord ne veut pas dire mêmes idées. Clique sur une barre pour comparer ces deux partis dans Face à face.</p>
  <details><summary class="src">Voir tous les partis d'un coup (tableau)</summary>${matrix}<p class="src">Partis rangés de la gauche vers la droite. Plus la case est foncée, plus ils votent pareil.</p></details></div>
- <div class="block" id="p-cmp"><h3>Comparer deux partis, vote par vote</h3>
- <div class="filters">${sel("pv-a","Parti A",P.map(c=>[c,pName(c)]),A)}${sel("pv-b","Parti B",P.map(c=>[c,pName(c)]),B)}${sel("pv-mode","Afficher",[["desaccord","Leurs désaccords"],["accord","Leurs accords"],["all","Tous les votes"]],PV.mode)}<div class="fctl"><label for="pv-q" class="mono">Rechercher</label><input id="pv-q" type="search" value="${esc(PV.q)}" placeholder="${ch==="an"?"ex. retraites, immigration, budget":"ex. migration, Ukraine, climate"}"></div></div>
- ${ra!=null?`<p class="agree"><b>${Math.round(ra*100)} %</b> d'accord entre ${pName(A)} et ${pName(B)} ${chName==="l'Assemblée nationale"?"à l'Assemblée":"au Parlement européen"}, sur ${na.toLocaleString("fr-FR")} votes.</p>`:""}
- <p class="mono">${list.length} vote${list.length>1?"s":""}${list.length>PV.n?`, ${PV.n} affichés`:""}${ch==="an"?" · votes sur l'ensemble d'un texte et motions (les amendements, au titre muet, ne sont pas listés)":" · intitulés en anglais dans la source"}</p>
- <div>${rows||`<p class="note">Aucun vote ne correspond.${ch==="an"&&PV.mode==="desaccord"&&!q?` Sur ce thème, leurs désaccords se jouent dans les amendements, qui comptent dans le taux mais ne sont pas listés.`:""}${ch==="an"&&PV.theme==="retraites"?` La réforme des retraites de 2023 n'a jamais été votée dans son ensemble par l'Assemblée : elle a été adoptée par le 49.3. Seuls des motions (rejet, référendum, censure) et des amendements ont été mis aux voix.`:""}</p>`}</div>
- ${list.length>PV.n?'<button class="btn ghost" id="pv-more">Afficher 20 de plus</button>':""}</div>`;
+ <p class="src">${ch==="an"?`Position de chaque groupe sur ${nTot.toLocaleString("fr-FR")} scrutins publics depuis juillet 2022, amendements compris (open data de l'Assemblée nationale). Glucksmann : Place publique siège dans le groupe socialiste.`:`Position majoritaire des eurodéputés français de chaque parti sur ${nTot.toLocaleString("fr-FR")} votes finaux depuis 2019 (HowTheyVote.eu, licence ODbL).`} ${missing} Ruffin n'a pas de groupe à lui.</p>`;
 }
+/* votes de deux partis, rangés par thème (utilisé dans Face à face) */
+function partyDiff(a,b,ch){
+ const vs=pVotes(ch,"all").filter(v=>{const x=pPos(v,a,ch),y=pPos(v,b,ch);return x!=null&&y!=null&&x!==y});
+ const ths=[...THEMES.map(t=>t.id),"autre"];
+ const TYP={texte:"Vote sur le texte",motion:"Motion"};
+ const row=v=>`<div class="pvrow"><div class="pvt"><span class="mono">${esc(v.date)}</span> ${ch==="an"?`<span class="fam">${TYP[v.type]||""}</span> `:""}${esc(ch==="an"?v.titre.replace(/^l'ensemble (du |de la |de l')/,"").replace(/^./,x=>x.toUpperCase()):v.titre)} <a class="src" href="${ch==="an"?anUrl(v):`https://howtheyvote.eu/votes/${v.id}`}" target="_blank" rel="noopener">source</a></div><div class="eppos"><span>${PARTY[a][ch]} ${pBadge(pPos(v,a,ch))}</span><span>${PARTY[b][ch]} ${pBadge(pPos(v,b,ch))}</span></div></div>`;
+ const cards=ths.map(t=>{const l=vs.filter(v=>(v.themes[0]||"autre")===t);if(!l.length)return "";const shown=l.slice(0,10);
+  return `<details class="dcard pdcard"><summary><span class="dname">${t==="autre"?"Autres sujets":THNAME[t]}</span><span class="dcount mono"><b class="t-opp">${l.length} vote${l.length>1?"s":""} où ils divergent</b></span></summary><div class="dgrp">${shown.map(row).join("")}${l.length>10?`<p class="src">… et ${l.length-10} autres.</p>`:""}</div></details>`}).join("");
+ return {n:vs.length,cards}}
 
 /* ---------- Face à face ---------- */
 let DU={a:"le_pen",b:"melenchon",f:"all",open:null};
@@ -605,8 +574,9 @@ function renderDuel(){
  const cards=themes.map(([t,l,s,c])=>{const vis=l.filter(keep);if(!vis.length)return "";
   const groups=["opp","ecart","acc"].map(k=>{const g=vis.filter(q=>cat(q)===k).sort((x,y)=>gap(y)-gap(x)||x.n-y.n);return g.length?`<div class="dgrp"><div class="dgh dgh-${k}">${DCL[k]} · ${g.length}</div>${g.map(qrow).join("")}</div>`:""}).join("");
   return `<details class="dcard"${DU.open===t.id?" open":""} data-dth="${t.id}"><summary><span class="dname">${t.name}</span>${stack(c)}<span class="v" title="proximité">${Math.round(s*100)} %</span><span class="dcount mono">${c.opp?`<b class="t-opp">${c.opp} opposé${c.opp>1?"s":""}</b>`:"0 opposé"} · <b class="t-acc">${c.acc} d'accord</b> · sur ${l.length}</span></summary>${groups}</details>`}).join("");
- const parl=["an","ep"].map(ch=>{if(!PARTY[a][ch]||!PARTY[b][ch])return `<p class="src">${ch==="an"?"Assemblée":"Parlement européen"} : ${[a,b].filter(x=>!PARTY[x][ch]).map(x=>NAME[x]).join(" et ")} sans groupe, pas de comparaison.</p>`;const [r,n]=pAgree(a,b,ch,"all");return r==null?"":`<p><b>${Math.round(r*100)} %</b> de votes identiques ${ch==="an"?"à l'Assemblée":"au Parlement européen"} entre ${PARTY[a][ch]} et ${PARTY[b][ch]} <span class="src">(${n.toLocaleString("fr-FR")} votes)</span> <button class="btn ghost" data-duch="${ch}">Voir leurs désaccords</button></p>`}).join("");
- const ep=`<div class="card"><h3>Ce que leurs partis votent</h3>${parl}<p class="src">Votes réels des groupes, pas des déclarations.</p></div>`;
+ const parl=["an","ep"].map(ch=>{const lab=ch==="an"?"À l'Assemblée nationale":"Au Parlement européen";if(!PARTY[a][ch]||!PARTY[b][ch])return `<div class="block"><h4>${lab}</h4><p class="src">${[a,b].filter(x=>!PARTY[x][ch]).map(x=>NAME[x]).join(" et ")} sans groupe : pas de comparaison.</p></div>`;const [r,n]=pAgree(a,b,ch,"all");if(r==null)return "";const d=partyDiff(a,b,ch);
+  return `<div class="block"><h4>${lab}</h4><p><b>${Math.round(r*100)} %</b> de votes identiques entre ${PARTY[a][ch]} et ${PARTY[b][ch]} <span class="src">(${n.toLocaleString("fr-FR")} votes${ch==="an"?", amendements compris":""})</span></p>${d.n?`<p class="src">${d.n} vote${d.n>1?"s":""} ${ch==="an"?"sur l'ensemble d'un texte ou une motion":"finaux"} où ils ont voté différemment, par thème :</p><div class="dcards">${d.cards}</div>`:""}</div>`}).join("");
+ const ep=`<div class="card"><h3>Ce que leurs partis votent</h3><p class="src">Votes réels des groupes, pas des déclarations.</p>${parl}</div>`;
  const opts=C.map(c=>[c[0],c[1]]);
  document.getElementById("v-duel").innerHTML=`<div class="block"><h2>Face à face</h2><p class="lede">Deux candidats, leurs positions comparées question par question : où ils s'opposent, où ils se rejoignent.</p>
  <div class="filters">${sel("du-a","Candidat A",opts,a)}${sel("du-b","Candidat B",opts,b)}<button class="btn ghost" id="du-swap">Inverser</button></div></div>
@@ -775,7 +745,7 @@ function renderMethode(){
  <p class="src">Code source : <a href="${REPO}" target="_blank" rel="noopener">${REPO.replace("https://","")}</a></p></div>`;
 }
 
-function show(v){document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));document.querySelectorAll("section.view").forEach(s=>s.hidden=s.id!=="v-"+v);if(v==="affinite")renderAff();if(v==="votes")renderVotes();if(v==="duel")renderDuel()}
+function show(v){document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));document.querySelectorAll("section.view").forEach(s=>s.hidden=s.id!=="v-"+v);if(v==="affinite")renderAff();if(v==="votes")renderEP();if(v==="duel")renderDuel()}
 document.querySelector("nav.tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-v]");if(b)show(b.dataset.v)});
 
 const pop=document.getElementById("pop");
@@ -794,7 +764,6 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")pop.hidden=true});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("dcard")){if(d.open){DU.open=d.dataset.dth;document.querySelectorAll(".dcard[open]").forEach(o=>{if(o!==d)o.open=false})}else if(DU.open===d.dataset.dth)DU.open=null}},true);
 document.addEventListener("input",e=>{if(e.target.dataset.w){const v=+e.target.value;S.w[e.target.dataset.w]=v;save();document.getElementById("wl").textContent=["Aucune","Faible","Moyenne","Forte"][v]}});
 document.addEventListener("change",e=>{const id=e.target.id,v=e.target.value;
- if(id.startsWith("vf-")){VF[id.slice(3)]=v;renderVotes()}
  if(id.startsWith("ff-")){FF[id.slice(3)]=v;renderFC()}
  if(id.startsWith("pv-")&&id!=="pv-q"){PV[id.slice(3)]=v;PV.n=20;renderEP()}
  if(id.startsWith("du-")){DU[id.slice(3)]=v;renderDuel()}});
@@ -802,18 +771,17 @@ let epT;document.addEventListener("input",e=>{if(e.target.id==="pv-q"){clearTime
 document.addEventListener("click",e=>{
  const jf=e.target.closest("[data-jfam]");if(jf){JF.fam=jf.dataset.jfam;renderJustice();return}
  const jc=e.target.closest("[data-jcand]");if(jc){const d=document.getElementById("jc-"+jc.dataset.jcand);if(d){d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})}return}
- const s=e.target.closest("[data-seg]");if(s){if(s.dataset.seg==="vview"){VF.view=s.dataset.val;renderVotes()}else{FF.mode=s.dataset.val;FF.verdict="all";renderFC()}return}
- const vc=e.target.closest("[data-vcand]");if(vc){VF.cand=VF.cand===vc.dataset.vcand?"all":vc.dataset.vcand;renderVotes();return}
+ const s=e.target.closest("[data-seg]");if(s){FF.mode=s.dataset.val;FF.verdict="all";renderFC();return}
  const fc=e.target.closest("[data-fccand]");if(fc){FF.cand=FF.cand===fc.dataset.fccand?"all":fc.dataset.fccand;renderFC();return}
  const fv=e.target.closest("[data-fcverdict]");if(fv){FF.verdict=FF.verdict===fv.dataset.fcverdict?"all":fv.dataset.fcverdict;renderFC();return}
  const fy=e.target.closest("[data-fcyear]");if(fy){FF.year=FF.year===fy.dataset.fcyear?"all":fy.dataset.fcyear;renderFC();return}
  if(e.target.id==="ff-reset"){FF={...FF,cand:"all",verdict:"all",fc:"all",year:"all",sujet:"all"};renderFC();return}
  const fs=e.target.closest("[data-fcsujet]");if(fs){FF.sujet=FF.sujet===fs.dataset.fcsujet?"all":fs.dataset.fcsujet;renderFC();return}
- if(e.target.id==="pv-more"){PV.n+=20;renderEP();return}
  const pch=e.target.closest("[data-pch]");if(pch){PV.ch=pch.dataset.pch;PV.theme="all";PV.n=20;renderEP();return}
  const pf=e.target.closest("[data-pfocus]");if(pf){PV.focus=pf.dataset.pfocus;renderEP();return}
- const pc=e.target.closest("[data-pcmp]");if(pc){PV={...PV,a:PV.focus,b:pc.dataset.pcmp,mode:"desaccord",n:20};renderEP();document.getElementById("p-cmp").scrollIntoView({behavior:"smooth"});return}
- const dch=e.target.closest("[data-duch]");if(dch){PV={...PV,ch:dch.dataset.duch,theme:"all",a:DU.a,b:DU.b,mode:"desaccord",n:20,q:""};renderEP();show("votes");document.getElementById("p-cmp").scrollIntoView();return}
+ const psub=e.target.closest("[data-psub]");if(psub){PV.sub=psub.dataset.psub;renderEP();return}
+ const pdu=e.target.closest("[data-pduel]");if(pdu){DU={...DU,a:PV.focus,b:pdu.dataset.pduel,f:"all",open:null};renderDuel();show("duel");const k=document.querySelector("#v-duel .card:last-of-type");if(k)k.scrollIntoView();return}
+ if(e.target.closest("[data-goduel]")){show("duel");return}
  if(e.target.id==="du-swap"){DU={...DU,a:DU.b,b:DU.a};renderDuel();return}
  const duf=e.target.closest("[data-duf]");if(duf){DU.f=duf.dataset.duf;renderDuel();return}
 });
@@ -821,7 +789,7 @@ document.addEventListener("click",e=>{
 Promise.all(["questions","affaires","factchecks","meta","europarl","an"].map(n=>fetch(`data/${n}.json`).then(r=>{if(!r.ok)throw new Error(n);return r.json()})))
 .then(([q,a,f,m,ep,an])=>{Q=q;AFF=a;FC=f;META=m;EP=ep;AN=an;
  document.getElementById("stamp").innerHTML=`Données du ${esc(m.built_at)}<br>1er tour : 18 avril 2027<br>2nd tour : 2 mai 2027`;
- renderThemes();renderVotes();renderEP();renderJustice();renderFC();renderContro();renderMethode();
+ renderThemes();renderEP();renderJustice();renderFC();renderContro();renderMethode();
  const h0=(location.hash||"").slice(1);if(["themes","affinite","duel","votes","justice","factchecks","controverses","methode"].includes(h0))show(h0);})
 .catch(err=>{document.getElementById("v-themes").innerHTML=`<p class="note">Les données n'ont pas pu être chargées (${esc(err.message)}). Recharge la page ; si le problème persiste, les fichiers de données manquent dans la publication.</p>`});
 

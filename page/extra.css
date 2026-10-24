@@ -150,4 +150,13 @@ table.mx td.mx-self{background:var(--mid);color:var(--muted)}
 .dsc-dot.same.da{margin-left:-11px}.dsc-dot.same.db{margin-left:-3px}
 .dsc-dot.inl{position:static;display:inline-block;margin:0 2px 0 0;vertical-align:-2px;width:12px;height:12px}
 .dsc-l,.dsc-r{position:absolute;top:18px;font-family:var(--f-mono);font-size:.62rem;color:var(--muted)}.dsc-l{left:-6px}.dsc-r{right:-6px}
+.vmark{display:inline-block;margin-left:5px;font-family:var(--f-mono);font-size:.6rem;font-weight:600;letter-spacing:.03em;padding:0 4px;border-radius:3px;background:var(--accent);color:var(--bg);vertical-align:1px}
+.subnav{display:flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:6px 0 14px;position:sticky;top:0;z-index:5;background:var(--surface)}
+.subnav button{flex:1;font-family:var(--f-display);font-stretch:90%;font-weight:600;font-size:.95rem;border:0;background:var(--surface);color:var(--muted);padding:10px 8px;cursor:pointer}
+.subnav button+button{border-left:1px solid var(--line)}
+.subnav button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.pdcard>summary{grid-template-columns:minmax(0,1fr);grid-template-areas:"n" "c"}
+@media (min-width:720px){.pdcard>summary{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n c"}}
+.pvrow{display:grid;gap:4px;padding:8px 0;border-bottom:1px solid var(--line)}.pvt{font-size:.9rem}
+.card h4{margin:14px 0 4px}
 </style>
