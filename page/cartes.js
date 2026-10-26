@@ -159,7 +159,7 @@ function cardHTML(c){
  const dv=(typeof DITVOTE!=="undefined"?DITVOTE.filter(x=>x.cand===c).length:0);
  const front=`<div class="cface cfront">
   <div class="chead" style="background:${pm.col}"><span class="cini">${party?esc(PARTY[c]&&(PARTY[c].an||PARTY[c].ep)||pm.p).slice(0,3):ini}</span><div><div class="cname">${party?esc(pm.p):NAME[c]}</div><div class="csub">${party?"candidat : "+NAME[c]:esc(pm.p)}</div></div></div>
-  <div class="cfam"><span>${esc(pm.fam)}</span><span class="mono" title="Questions où il veut un changement fort par rapport à aujourd'hui">${d.rupt.length} changement${d.rupt.length>1?"s":""} fort${d.rupt.length>1?"s":""} sur 100</span></div>
+  <div class="cfam"><span>${esc(pm.fam)}</span><span class="mono" title="Questions où il veut un changement fort par rapport à aujourd'hui">${d.rupt.length} changement${d.rupt.length>1?"s":""} fort${d.rupt.length>1?"s":""}</span></div>
   <div class="cgauges">${AXES.map(ax=>gauge(c,ax)).join("")}</div>
   <div class="csec"><div class="cst">Ce qui changerait</div><ul class="clist">${top.map(([l,q])=>`<li><span class="cth">${THNAME[q.theme]}</span>${esc(l)}</li>`).join("")}</ul></div>
   <button class="cflip" data-cflip="${c}">Retourner la carte ↻</button></div>`;
