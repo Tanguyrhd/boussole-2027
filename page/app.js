@@ -471,9 +471,17 @@ document.addEventListener("input",e=>{if(e.target.dataset.w){const v=+e.target.v
 document.addEventListener("change",e=>{const id=e.target.id,v=e.target.value;
  if(id.startsWith("ff-")){FF[id.slice(3)]=v;renderFC()}
  if(id.startsWith("pv-")&&id!=="pv-q"){PV[id.slice(3)]=v;PV.n=20;renderEP()}
- if(id.startsWith("du-")){DU[id.slice(3)]=v;renderDuel()}});
+ if(id.startsWith("du-")){DU[id.slice(3)]=v;renderDuel()}
+ if(id==="cm-filtre"){CM.filtre=v;renderCartes()}});
 let epT;document.addEventListener("input",e=>{if(e.target.id==="pv-q"){clearTimeout(epT);const v=e.target.value;epT=setTimeout(()=>{PV.q=v;PV.n=20;renderEP();const i=document.getElementById("pv-q");if(i){i.focus();i.setSelectionRange(v.length,v.length)}},250)}});
 document.addEventListener("click",e=>{
+ const cf=e.target.closest("[data-cflip]");if(cf){const c=cf.dataset.cflip;CM.flip[c]=!CM.flip[c];const el=cf.closest(".ccardx");if(el)el.classList.toggle("flipped",CM.flip[c]);return}
+ const cmo=e.target.closest("[data-cmode]");if(cmo){CM.mode=cmo.dataset.cmode;renderCartes();return}
+ const cg=e.target.closest("[data-cgo]");if(cg){const c=cg.dataset.c,v=cg.dataset.cgo;
+  if(v==="duel"){DU={...DU,a:c,b:DU.b===c?DU.a:DU.b,open:null};renderDuel();show("duel")}
+  else if(v==="justice"){show("justice");const d=document.getElementById("jc-"+c);if(d){d.open=true;d.scrollIntoView()}}
+  else if(v==="factchecks"){FF={...FF,cand:c};renderFC();show("factchecks")}
+  window.scrollTo&&window.scrollTo(0,0);return}
  const jf=e.target.closest("[data-jfam]");if(jf){JF.fam=jf.dataset.jfam;renderJustice();return}
  const jc=e.target.closest("[data-jcand]");if(jc){const d=document.getElementById("jc-"+jc.dataset.jcand);if(d){d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"})}return}
  const s=e.target.closest("[data-seg]");if(s){FF.mode=s.dataset.val;FF.verdict="all";renderFC();return}
@@ -494,6 +502,6 @@ document.addEventListener("click",e=>{
 Promise.all(["questions","affaires","factchecks","meta","europarl","an"].map(n=>fetch(`data/${n}.json`).then(r=>{if(!r.ok)throw new Error(n);return r.json()})))
 .then(([q,a,f,m,ep,an])=>{Q=q;AFF=a;FC=f;META=m;EP=ep;AN=an;
  document.getElementById("stamp").innerHTML=`Données du ${esc(m.built_at)}<br>1er tour : 18 avril 2027<br>2nd tour : 2 mai 2027`;
- renderThemes();renderEP();renderJustice();renderFC();renderContro();renderMethode();
- const h0=(location.hash||"").slice(1);if(["themes","affinite","duel","votes","justice","factchecks","controverses","methode"].includes(h0))show(h0);})
+ renderCartes();renderThemes();renderEP();renderJustice();renderFC();renderContro();renderMethode();
+ const h0=(location.hash||"").slice(1);if(["cartes","themes","affinite","duel","votes","justice","factchecks","controverses","methode"].includes(h0))show(h0);})
 .catch(err=>{document.getElementById("v-themes").innerHTML=`<p class="note">Les données n'ont pas pu être chargées (${esc(err.message)}). Recharge la page ; si le problème persiste, les fichiers de données manquent dans la publication.</p>`});

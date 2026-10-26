@@ -9,7 +9,8 @@
 </header>
 
 <nav class="tabs" role="tablist">
-  <button role="tab" data-v="themes" aria-selected="true">Thèmes</button>
+  <button role="tab" data-v="cartes" aria-selected="true">Cartes</button>
+  <button role="tab" data-v="themes" aria-selected="false">Thèmes</button>
   <button role="tab" data-v="affinite" aria-selected="false">Mon affinité</button>
   <button role="tab" data-v="duel" aria-selected="false">Face à face</button>
   <button role="tab" data-v="votes" aria-selected="false">Votes</button>
@@ -19,7 +20,8 @@
   <button role="tab" data-v="methode" aria-selected="false">Méthode</button>
 </nav>
 
-<section class="view" id="v-themes"><p class="loading">Chargement des données…</p></section>
+<section class="view" id="v-cartes"><p class="loading">Chargement des données…</p></section>
+<section class="view" id="v-themes" hidden></section>
 <section class="view" id="v-affinite" hidden></section>
 <section class="view" id="v-duel" hidden></section>
 <section class="view" id="v-votes" hidden><div class="stackv" id="votes-ep"></div></section>

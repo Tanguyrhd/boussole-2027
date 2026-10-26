@@ -12,7 +12,7 @@ P = Path(__file__).resolve().parent
 SITE = P.parent / "docs"  # dossier servi par GitHub Pages
 r = lambda n: (P / n).read_text(encoding="utf-8")
 inner_head = r("head.html") + r("base.css") + "\n" + r("extra.css")
-inner_body = r("body.html") + "\n<script>\n" + r("glossaire.js") + r("app.js") + "\n</script>\n"
+inner_body = r("body.html") + "\n<script>\n" + r("glossaire.js") + r("app.js") + r("cartes.js") + "\n</script>\n"
 
 STATIC_HEAD = """<!doctype html>
 <html lang="fr">
