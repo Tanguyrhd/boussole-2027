@@ -156,6 +156,8 @@ function cardHTML(c){
  /* 5 changements, au plus 2 par thème, pour donner une vue d'ensemble */
  const pool=d.rupt.length>=3?d.rupt:d.rupt.concat(d.soft.map(x=>[x[0]+" (plutôt)",x[1],x[2]]));
  const per={},top=[];for(const r of pool){const t=r[1].theme;if((per[t]||0)>=2)continue;per[t]=(per[t]||0)+1;top.push(r);if(top.length===5)break}
+ /* même ordre sur toutes les cartes : l'ordre des thèmes du site */
+ const TO=THEMES.map(t=>t.id);top.sort((a,b)=>TO.indexOf(a[1].theme)-TO.indexOf(b[1].theme)||a[1].n-b[1].n);
  const dv=(typeof DITVOTE!=="undefined"?DITVOTE.filter(x=>x.cand===c).length:0);
  const front=`<div class="cface cfront">
   <div class="chead" style="background:${pm.col}"><span class="cini">${party?esc(PARTY[c]&&(PARTY[c].an||PARTY[c].ep)||pm.p).slice(0,3):ini}</span><div><div class="cname">${party?esc(pm.p):NAME[c]}</div><div class="csub">${party?"candidat : "+NAME[c]:esc(pm.p)}</div></div></div>
@@ -200,7 +202,7 @@ function renderCartes(){
  <div class="hemi" role="group" aria-label="Hémicycle des candidats"><div class="hemi-floor"></div>${CORD.map(seatHTML).join("")}<div class="hemi-lab"><span>Gauche</span><span>Droite</span></div></div>
  <details class="block"><summary class="src">Comment les cartes sont calculées</summary>
  <p class="src"><b>Placement</b> : ordre gauche-droite habituel de la science politique, avec la famille politique indiquée sur chaque carte. Ce n'est pas un classement des candidats.</p>
- <p class="src"><b>Ce qui changerait</b> : parmi les 100 questions MonVote2027, celles où le candidat est « tout à fait pour » un changement par rapport à la situation actuelle (telle que décrite par MonVote), ou « tout à fait contre » ce qui existe déjà. On affiche les 5 où il se distingue le plus des autres candidats, avec au plus 2 par thème. S'il en a moins de 3, on complète avec ses positions « plutôt pour » (marquées). Les libellés reprennent les phrases MonVote en version courte.</p>
+ <p class="src"><b>Ce qui changerait</b> : parmi les 100 questions MonVote2027, celles où le candidat est « tout à fait pour » un changement par rapport à la situation actuelle (telle que décrite par MonVote), ou « tout à fait contre » ce qui existe déjà. On affiche les 5 où il se distingue le plus des autres candidats, avec au plus 2 par thème, puis rangées dans le même ordre de thèmes sur toutes les cartes. S'il en a moins de 3, on complète avec ses positions « plutôt pour » (marquées). Les libellés reprennent les phrases MonVote en version courte.</p>
  <p class="src"><b>Jauges</b> : moyenne de ses positions sur un groupe de questions (liste dans le code source), de la même façon pour tous. Le trait du milieu = position neutre. Une jauge résume une tendance, pas un programme.</p>
  <p class="src"><b>Famille politique</b> : classification courante en science politique et dans la presse. Le classement du RN à l'extrême droite par le ministère de l'Intérieur a été validé par le Conseil d'État en 2024.</p>
  <p class="src"><b>Partis</b> : la carte reprend les positions du candidat (le programme du parti pour 2027) et ajoute la façon dont son groupe vote réellement.</p></details>`;
