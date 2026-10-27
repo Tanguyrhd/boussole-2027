@@ -476,6 +476,7 @@ document.addEventListener("change",e=>{const id=e.target.id,v=e.target.value;
 let epT;document.addEventListener("input",e=>{if(e.target.id==="pv-q"){clearTimeout(epT);const v=e.target.value;epT=setTimeout(()=>{PV.q=v;PV.n=20;renderEP();const i=document.getElementById("pv-q");if(i){i.focus();i.setSelectionRange(v.length,v.length)}},250)}});
 document.addEventListener("click",e=>{
  const cf=e.target.closest("[data-cflip]");if(cf){const c=cf.dataset.cflip;CM.flip[c]=!CM.flip[c];const el=cf.closest(".ccardx");if(el)el.classList.toggle("flipped",CM.flip[c]);return}
+ if(e.target.closest("[data-cgo]")&&CM.open)closeCard();
  const cmo=e.target.closest("[data-cmode]");if(cmo){CM.mode=cmo.dataset.cmode;renderCartes();return}
  const cg=e.target.closest("[data-cgo]");if(cg){const c=cg.dataset.c,v=cg.dataset.cgo;
   if(v==="duel"){DU={...DU,a:c,b:DU.b===c?DU.a:DU.b,open:null};renderDuel();show("duel")}

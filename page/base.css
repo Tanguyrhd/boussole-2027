@@ -1,24 +1,15 @@
 <style>
 /* Layout: registre civique — une colonne de lecture, onglets en tête, chaque question est une ligne de vote à 5 cases (−− à ++) */
 :root{
-  --bg:#f6f7f9; --surface:#ffffff; --ink:#16202c; --muted:#5b6675; --line:#d9dee6;
-  --accent:#1f4f8a; --accent-soft:#e3ecf7;
-  --neg:#a8432f; --neg-soft:#f6e3dd; --pos:#2c6e5a; --pos-soft:#dcefe8; --mid:#e9ecf1;
-  --warn:#8a5a00; --warn-soft:#fbefd2;
+  --bg:#faf6f1; --surface:#ffffff; --ink:#263241; --muted:#66707e; --line:#e7e0d6;
+  --accent:#3f6fb5; --accent-soft:#e5eefb;
+  --neg:#c0553f; --neg-soft:#fbe6df; --pos:#3a8a6c; --pos-soft:#ddf2e8; --mid:#f2ede6;
+  --warn:#a4720e; --warn-soft:#fcf0d6; color-scheme:light;
   --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
   --f-body:"Source Serif 4",Georgia,serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0f141b; --surface:#171e28; --ink:#e7ecf2; --muted:#9aa6b5; --line:#2a3442;
-  --accent:#7fb0ec; --accent-soft:#1c2c42;
-  --neg:#e08a74; --neg-soft:#3a221c; --pos:#7cc7ad; --pos-soft:#17302a; --mid:#222b37;
-  --warn:#e5b65a; --warn-soft:#352a12; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0f141b; --surface:#171e28; --ink:#e7ecf2; --muted:#9aa6b5; --line:#2a3442;
-  --accent:#7fb0ec; --accent-soft:#1c2c42;
-  --neg:#e08a74; --neg-soft:#3a221c; --pos:#7cc7ad; --pos-soft:#17302a; --mid:#222b37;
-  --warn:#e5b65a; --warn-soft:#352a12; color-scheme:dark}
+/* Palette unique, claire et pastel : le site ne suit pas le mode sombre du navigateur. */
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55}
 .wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px}
 h1,h2,h3,h4{font-family:var(--f-display);font-stretch:85%;text-wrap:balance;margin:0;line-height:1.15}
