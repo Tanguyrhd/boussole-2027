@@ -555,7 +555,7 @@ function seg(name,opts,cur){return `<div class="fctl"><span class="mono">Afficha
 /* ---------- Votes des partis : Assemblée nationale (open data AN) et Parlement européen (HowTheyVote.eu, ODbL) ---------- */
 let EP=[], AN={pairs:{},votes:[],n:{}};
 const PORD=["melenchon","roussel","tondelier","glucksmann","attal","philippe","retailleau","le_pen","zemmour"];
-const PARTY={le_pen:{an:"RN",ep:"RN"},melenchon:{an:"LFI",ep:"LFI"},glucksmann:{an:"Socialistes",ep:"Place publique"},attal:{an:"Renaissance",ep:"Renaissance"},philippe:{an:"Horizons",ep:"Horizons"},retailleau:{an:"LR",ep:"LR"},tondelier:{an:"Écologistes",ep:"Écologistes"},roussel:{an:"PCF (GDR)",ep:null},zemmour:{an:null,ep:"Reconquête"}};
+const PARTY={le_pen:{an:"RN",ep:"RN"},melenchon:{an:"LFI",ep:"LFI"},glucksmann:{an:"Socialistes",ep:"Place publique"},attal:{an:"Renaissance",ep:"Renaissance"},philippe:{an:"Horizons",ep:"Horizons"},retailleau:{an:"LR",ep:"LR"},tondelier:{an:"Écologistes",ep:"Écologistes"},roussel:{an:"PCF (GDR)",ep:null},zemmour:{an:null,ep:"Reconquête"},ruffin:{an:null,ep:null}}; /* Ruffin : pas de groupe à lui */
 const EPLAB={"1":"Pour","-1":"Contre","0":"Abst."};
 const THEP=x=>THNAME[x]||"Autre";
 let PV={ch:"an",theme:"all",focus:"le_pen",a:"le_pen",b:"melenchon",mode:"desaccord",q:"",n:20};
